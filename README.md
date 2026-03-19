@@ -745,3 +745,24 @@ No rate limits on the read API in v1.
 
 **What happens if I call register twice?**
 It is idempotent. Same slug + same adminEmail updates the project safely. Always safe to retry.
+
+---
+
+## Agent checklist
+
+Before finishing the build, confirm every item:
+
+```
+✓ All editable content is captured in datasets — nothing left hardcoded that a non-technical user might need to change
+✓ Dataset slugs match the visible section labels on the site, not generic canonical names
+✓ initialContent contains real content from the site, not placeholder values
+✓ Registration API call succeeded and returned adminUrl and apiBase
+✓ Every hardcoded content value has been replaced with a fetch() call to apiBase
+✓ All datasets are fetched once at page load — no duplicate fetch calls across components
+✓ Images are bound dynamically via photo_url fields — no hardcoded img src values remaining
+✓ Empty array and empty object cases are handled gracefully in the UI
+✓ Fetch failures fall back to hardcoded initial content — no broken UI states
+✓ Admin URL has been output to the user as the final step of the build
+```
+
+If any item is unchecked, fix it before outputting the result to the user.
