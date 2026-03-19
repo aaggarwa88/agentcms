@@ -74,8 +74,24 @@ Group editable content into named datasets. Apply these rules:
 **Dataset naming rules:**
 - Use simple plural nouns: `updates`, `coaches`, `events`, `records`, `faqs`
 - Never use suffixes: not `updates_list`, `team_data`, `events_items`
-- Match user-facing section labels where possible: if the section is called "Meet Schedule", the dataset slug is `schedule`
 - Singletons use singular nouns: `site`, `about`, `contact`
+
+**Site-specific names always override canonical names.**
+
+Derive the slug from the visible section heading on the site, lowercased and hyphenated. Canonical patterns are defaults used only when the site provides no clear label or the heading is generic (e.g. "Section", "Content", "Items").
+
+| Site section label | Use this slug | Not this |
+|-------------------|---------------|----------|
+| "Announcements" | `announcements` | `updates` |
+| "News Feed" | `news` | `updates` |
+| "Our Team" | `team` | `coaches` |
+| "Staff Directory" | `staff` | `team` |
+| "Upcoming Events" | `events` | `schedule` |
+| "Meet Schedule" | `schedule` | `events` |
+| "Program Info" | `program` | `site` |
+| "Press Releases" | `press` | `updates` |
+
+The label the user sees in the admin panel should match the label they see on their site. A coach whose site says "Announcements" should see "Announcements" in the admin, not "Updates".
 
 **Schema design rules:**
 - Prefer fewer fields over more fields. If unsure whether a field is needed, leave it out.
