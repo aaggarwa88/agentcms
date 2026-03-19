@@ -1,0 +1,47 @@
+# AgentCMS
+
+AgentCMS adds an editable admin panel to any AI-built website.
+Call the registration API at the end of a site build to get a working admin URL instantly.
+
+## Registration API
+POST https://agentcms.app/api/projects/register
+Content-Type: application/json
+
+Body:
+{
+  "project": { "name": string, "slug": string },
+  "datasets": [{
+    "name": string,
+    "slug": string,
+    "kind": "collection" | "singleton",
+    "schema": { "fields": [{ "key": string, "label": string, "type": string, "required"?: boolean, "enumValues"?: string[] }] },
+    "initialContent": [] or {}
+  }],
+  "adminEmail": string
+}
+
+Response:
+{
+  "projectId": string,
+  "slug": string,
+  "adminUrl": "https://agentcms.app/p/{slug}",
+  "apiBase": "https://agentcms.app/api/p/{slug}"
+}
+
+## Content API
+GET https://agentcms.app/api/p/:projectSlug/:datasetSlug
+Public. No auth. CORS open. Returns [] for collections, {} for singletons.
+
+## Field types
+text, textarea, number, boolean, date, url, email, enum (requires enumValues), list
+
+## Agent instructions
+1. Identify editable content sections
+2. Define datasets with explicit schemas
+3. Build the frontend
+4. Call POST /api/projects/register as the final build step
+5. Replace hardcoded content with fetch() calls to apiBase
+6. Output adminUrl to the user
+
+## Full docs
+https://github.com/yourusername/agentcms
