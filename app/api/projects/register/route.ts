@@ -122,7 +122,7 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({
     projectId,
     slug: resolvedSlug,
-    adminUrl: `https://agentcms.app/p/${resolvedSlug}`,
-    apiBase: `https://agentcms.app/api/p/${resolvedSlug}`,
+    adminUrl: `https://www.agentcms.app/p/${resolvedSlug}`,
+    apiBase: `https://www.agentcms.app/api/p/${resolvedSlug}`,
   })
 }
