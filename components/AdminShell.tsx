@@ -133,10 +133,13 @@ export default function AdminShell({
     kind === 'singleton' ? (currentValue as Item) : {}
   )
   // null = nothing selected, -1 = new item, >=0 = editing item at index
+  const initialItems = kind === 'collection' ? (currentValue as Item[]) : []
   const [selectedIndex, setSelectedIndex] = useState<number | null>(
-    kind === 'singleton' ? null : null
+    kind === 'collection' && initialItems.length > 0 ? 0 : null
   )
-  const [formValue, setFormValue] = useState<Item>({})
+  const [formValue, setFormValue] = useState<Item>(
+    kind === 'collection' && initialItems.length > 0 ? { ...initialItems[0] } : {}
+  )
   const [saving, setSaving] = useState(false)
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle')
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
@@ -186,8 +189,13 @@ export default function AdminShell({
                 : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
             }`}
           >
-            <span>{ds.name}</span>
-            <span className={`text-xs px-1.5 py-0.5 rounded ${
+            <div className="min-w-0">
+              <div className="truncate">{ds.name}</div>
+              <div className={`text-xs mt-0.5 truncate ${ds.slug === currentDatasetSlug ? 'text-violet-400' : 'text-gray-400'}`}>
+                /{ds.slug}
+              </div>
+            </div>
+            <span className={`text-xs px-1.5 py-0.5 rounded shrink-0 ml-2 ${
               ds.slug === currentDatasetSlug ? 'bg-violet-100 text-violet-600' : 'bg-gray-100 text-gray-400'
             }`}>
               {ds.kind === 'singleton' ? '1' : '…'}
@@ -307,12 +315,27 @@ export default function AdminShell({
 
   let col3: React.ReactNode = null
 
+  const apiUrl = `https://www.agentcms.app/api/p/${projectSlug}/${currentDatasetSlug}`
+
   if (kind === 'singleton') {
     col3 = (
       <div className="flex-1 flex flex-col h-full overflow-hidden">
         <div className="px-6 py-3 border-b border-gray-200">
-          <h2 className="text-sm font-semibold text-gray-800">{currentDatasetName}</h2>
-          <p className="text-xs text-gray-400">Singleton — one record</p>
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h2 className="text-sm font-semibold text-gray-800">{currentDatasetName}</h2>
+              <p className="text-xs text-gray-400">Singleton — one record</p>
+            </div>
+            <a
+              href={apiUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs font-mono text-violet-600 hover:text-violet-800 bg-violet-50 px-2 py-1 rounded truncate max-w-xs shrink-0"
+              title={apiUrl}
+            >
+              GET /{projectSlug}/{currentDatasetSlug}
+            </a>
+          </div>
         </div>
         {renderForm(
           singletonValue,
@@ -330,8 +353,20 @@ export default function AdminShell({
     col3 = (
       <div className="flex-1 flex flex-col h-full overflow-hidden">
         <div className="px-6 py-3 border-b border-gray-200">
-          <h2 className="text-sm font-semibold text-gray-800">{currentDatasetName}</h2>
-          <p className="text-xs text-gray-400">Collection</p>
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h2 className="text-sm font-semibold text-gray-800">{currentDatasetName}</h2>
+              <p className="text-xs text-gray-400">Collection</p>
+            </div>
+            <a
+              href={apiUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs font-mono text-violet-600 hover:text-violet-800 bg-violet-50 px-2 py-1 rounded truncate max-w-xs shrink-0"
+            >
+              GET /{projectSlug}/{currentDatasetSlug}
+            </a>
+          </div>
         </div>
         {emptyState}
       </div>
@@ -343,8 +378,20 @@ export default function AdminShell({
     col3 = (
       <div className="flex-1 flex flex-col h-full overflow-hidden">
         <div className="px-6 py-3 border-b border-gray-200">
-          <h2 className="text-sm font-semibold text-gray-800">{title}</h2>
-          <p className="text-xs text-gray-400">{currentDatasetName}</p>
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h2 className="text-sm font-semibold text-gray-800">{title}</h2>
+              <p className="text-xs text-gray-400">{currentDatasetName}</p>
+            </div>
+            <a
+              href={apiUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs font-mono text-violet-600 hover:text-violet-800 bg-violet-50 px-2 py-1 rounded truncate max-w-xs shrink-0"
+            >
+              GET /{projectSlug}/{currentDatasetSlug}
+            </a>
+          </div>
         </div>
         {renderForm(
           formValue,
