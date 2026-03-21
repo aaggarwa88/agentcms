@@ -86,6 +86,7 @@ export async function POST(req: NextRequest) {
       .get()
 
     let datasetId: string
+    let isNewDataset = false
 
     if (!existingDataset.empty) {
       datasetId = existingDataset.docs[0].id
@@ -106,17 +107,23 @@ export async function POST(req: NextRequest) {
           createdAt: new Date(),
         })
       datasetId = newDataset.id
+      isNewDataset = true
     }
 
-    const defaultContent =
-      dataset.kind === 'collection' ? [] : {}
+    // Only write content when:
+    // 1. Dataset is brand new (set initialContent or empty default), OR
+    // 2. Dataset exists but caller explicitly provided initialContent
+    const shouldWriteContent = isNewDataset || dataset.initialContent !== undefined
 
-    await db
-      .collection(`projects/${projectId}/datasets/${datasetId}/contents`)
-      .add({
-        value: dataset.initialContent ?? defaultContent,
-        updatedAt: new Date(),
-      })
+    if (shouldWriteContent) {
+      const defaultContent = dataset.kind === 'collection' ? [] : {}
+      await db
+        .collection(`projects/${projectId}/datasets/${datasetId}/contents`)
+        .add({
+          value: dataset.initialContent ?? defaultContent,
+          updatedAt: new Date(),
+        })
+    }
   }
 
   return NextResponse.json({
