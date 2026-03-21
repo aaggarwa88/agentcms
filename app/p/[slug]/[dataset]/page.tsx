@@ -1,6 +1,5 @@
 import { db } from '@/lib/firebase-admin'
-import DatasetEditor from '@/components/DatasetEditor'
-import Link from 'next/link'
+import AdminShell from '@/components/AdminShell'
 
 interface PageProps {
   params: { slug: string; dataset: string }
@@ -21,6 +20,19 @@ export default async function DatasetPage({ params }: PageProps) {
   const projectId = projectDoc.id
   const projectName = projectDoc.data().name as string
 
+  // Fetch ALL datasets for column 1 nav
+  const allDatasetsSnap = await db
+    .collection(`projects/${projectId}/datasets`)
+    .orderBy('createdAt', 'asc')
+    .get()
+
+  const allDatasets = allDatasetsSnap.docs.map(d => ({
+    name: d.data().name as string,
+    slug: d.data().slug as string,
+    kind: d.data().kind as 'collection' | 'singleton',
+  }))
+
+  // Current dataset
   const datasetSnap = await db
     .collection(`projects/${projectId}/datasets`)
     .where('slug', '==', params.dataset)
@@ -56,30 +68,15 @@ export default async function DatasetPage({ params }: PageProps) {
     : contentsSnap.docs[0].data().value
 
   return (
-    <div className="min-h-screen bg-white">
-      <div className="max-w-3xl mx-auto px-6 py-8">
-        <div className="mb-6">
-          <Link
-            href={`/p/${params.slug}`}
-            className="text-sm text-violet-600 hover:text-violet-800 mb-2 inline-block"
-          >
-            ← Back to {projectName}
-          </Link>
-          <h1 className="text-2xl font-bold text-gray-900">
-            {projectName}{' '}
-            <span className="text-gray-400 font-normal">/</span>{' '}
-            {datasetData.name}
-          </h1>
-        </div>
-
-        <DatasetEditor
-          projectSlug={params.slug}
-          datasetSlug={params.dataset}
-          schema={schema}
-          kind={kind}
-          currentValue={currentValue}
-        />
-      </div>
-    </div>
+    <AdminShell
+      projectSlug={params.slug}
+      projectName={projectName}
+      allDatasets={allDatasets}
+      currentDatasetSlug={params.dataset}
+      currentDatasetName={datasetData.name as string}
+      schema={schema}
+      kind={kind}
+      currentValue={currentValue}
+    />
   )
 }
