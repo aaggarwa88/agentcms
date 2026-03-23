@@ -1,8 +1,15 @@
 import { db } from '@/lib/firebase-admin'
 import AdminShell from '@/components/AdminShell'
+import type { Metadata } from 'next'
 
 interface PageProps {
   params: { slug: string; dataset: string }
+}
+
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  return {
+    title: `${params.dataset} · ${params.slug} · AgentCMS`,
+  }
 }
 
 export default async function DatasetPage({ params }: PageProps) {

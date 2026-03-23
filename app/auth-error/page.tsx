@@ -1,3 +1,9 @@
+import type { Metadata } from 'next'
+
+export const metadata: Metadata = {
+  title: 'Sign-in error · AgentCMS',
+}
+
 export default function AuthErrorPage({
   searchParams,
 }: {
