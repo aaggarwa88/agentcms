@@ -79,7 +79,15 @@ function FieldInput({
           </select>
         )
       case 'list':
-        return <input type="text" className={base} placeholder="comma separated values" value={Array.isArray(value) ? (value as string[]).join(', ') : (value as string) ?? ''} onChange={e => onChange(e.target.value.split(',').map(s => s.trim()).filter(Boolean))} />
+        return (
+          <textarea
+            rows={3}
+            className={base}
+            placeholder="One item per line"
+            value={Array.isArray(value) ? (value as string[]).join('\n') : (value as string) ?? ''}
+            onChange={e => onChange(e.target.value.split('\n').map(s => s.trim()).filter(Boolean))}
+          />
+        )
       default:
         return <input type="text" className={base} value={(value as string) ?? ''} onChange={e => onChange(e.target.value)} />
     }

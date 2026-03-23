@@ -62,8 +62,21 @@ export async function POST(req: NextRequest) {
       projectId = doc.id
       await doc.ref.update({ name: project.name, updatedAt: new Date() })
     } else {
-      // Different owner — append suffix
-      resolvedSlug = `${project.slug}-2`
+      // Different owner — find next available suffix
+      let suffix = 2
+      while (true) {
+        const candidate = `${project.slug}-${suffix}`
+        const collision = await db
+          .collection('projects')
+          .where('slug', '==', candidate)
+          .limit(1)
+          .get()
+        if (collision.empty) {
+          resolvedSlug = candidate
+          break
+        }
+        suffix++
+      }
     }
   }
 

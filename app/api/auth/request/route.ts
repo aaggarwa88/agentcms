@@ -30,12 +30,24 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true })
   }
 
-  // Generate one-time token
-  const token = crypto.randomBytes(32).toString('hex')
+  // Rate limit: max 5 requests per email per 15 minutes
+  const windowStart = new Date(Date.now() - 15 * 60 * 1000)
+  const recentSnap = await db
+    .collection('auth_tokens')
+    .where('email', '==', email)
+    .where('createdAt', '>=', windowStart)
+    .get()
+  if (recentSnap.size >= 5) {
+    return NextResponse.json({ ok: true }) // silent — don't reveal rate limit
+  }
+
+  // Generate one-time token — store only SHA-256 hash, never plaintext
+  const rawToken = crypto.randomBytes(32).toString('hex')
+  const tokenHash = crypto.createHash('sha256').update(rawToken).digest('hex')
   const expiresAt = new Date(Date.now() + 15 * 60 * 1000) // 15 min
 
   await db.collection('auth_tokens').add({
-    token,
+    tokenHash,
     email,
     projectSlug,
     expiresAt,
@@ -44,7 +56,7 @@ export async function POST(req: NextRequest) {
   })
 
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://www.agentcms.app'
-  const magicLink = `${baseUrl}/api/auth/verify?token=${token}&redirect=${encodeURIComponent(redirect ?? `/p/${projectSlug}`)}`
+  const magicLink = `${baseUrl}/api/auth/verify?token=${rawToken}&redirect=${encodeURIComponent(redirect ?? `/p/${projectSlug}`)}`
 
   await resend.emails.send({
     from: 'AgentCMS <noreply@agentcms.app>',

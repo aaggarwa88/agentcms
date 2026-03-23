@@ -1,25 +1,37 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/firebase-admin'
 import { SignJWT } from 'jose'
+import crypto from 'crypto'
 
 function getJwtSecret() {
   if (!process.env.JWT_SECRET) throw new Error('JWT_SECRET env var is not set')
   return new TextEncoder().encode(process.env.JWT_SECRET)
 }
 
+function safeRedirect(redirect: string | null): string {
+  // Only allow relative paths — block open redirect to external URLs
+  if (!redirect || !redirect.startsWith('/') || redirect.startsWith('//')) {
+    return '/'
+  }
+  return redirect
+}
+
 export async function GET(req: NextRequest) {
   const { searchParams } = req.nextUrl
-  const token = searchParams.get('token')
-  const redirect = searchParams.get('redirect') ?? '/'
+  const rawToken = searchParams.get('token')
+  const redirectTo = safeRedirect(searchParams.get('redirect'))
 
-  if (!token) {
+  if (!rawToken) {
     return NextResponse.redirect(new URL('/auth-error?reason=missing-token', req.url))
   }
 
-  // Find token in Firestore
+  // Hash the incoming token to compare against stored hash
+  const tokenHash = crypto.createHash('sha256').update(rawToken).digest('hex')
+
+  // Find token in Firestore by hash
   const tokenSnap = await db
     .collection('auth_tokens')
-    .where('token', '==', token)
+    .where('tokenHash', '==', tokenHash)
     .where('used', '==', false)
     .limit(1)
     .get()
@@ -50,7 +62,7 @@ export async function GET(req: NextRequest) {
     .setExpirationTime('7d')
     .sign(getJwtSecret())
 
-  const response = NextResponse.redirect(new URL(redirect, req.url))
+  const response = NextResponse.redirect(new URL(redirectTo, req.url))
   response.cookies.set('agentcms_session', jwt, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
