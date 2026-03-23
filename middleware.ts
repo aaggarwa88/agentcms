@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { jwtVerify } from 'jose'
 
-const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET ?? 'fallback-secret')
+function getJwtSecret() {
+  if (!process.env.JWT_SECRET) throw new Error('JWT_SECRET env var is not set')
+  return new TextEncoder().encode(process.env.JWT_SECRET)
+}
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl
@@ -19,7 +22,7 @@ export async function middleware(req: NextRequest) {
 
   if (token) {
     try {
-      const { payload } = await jwtVerify(token, JWT_SECRET)
+      const { payload } = await jwtVerify(token, getJwtSecret())
       // Session must be scoped to this project
       if (payload.projectSlug === projectSlug) {
         return NextResponse.next()

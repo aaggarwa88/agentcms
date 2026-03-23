@@ -2,7 +2,10 @@ import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/firebase-admin'
 import { SignJWT } from 'jose'
 
-const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET ?? 'fallback-secret')
+function getJwtSecret() {
+  if (!process.env.JWT_SECRET) throw new Error('JWT_SECRET env var is not set')
+  return new TextEncoder().encode(process.env.JWT_SECRET)
+}
 
 export async function GET(req: NextRequest) {
   const { searchParams } = req.nextUrl
@@ -45,7 +48,7 @@ export async function GET(req: NextRequest) {
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
     .setExpirationTime('7d')
-    .sign(JWT_SECRET)
+    .sign(getJwtSecret())
 
   const response = NextResponse.redirect(new URL(redirect, req.url))
   response.cookies.set('agentcms_session', jwt, {
