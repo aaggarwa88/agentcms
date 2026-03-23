@@ -1,9 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { Suspense, useState } from 'react'
 import { useParams, useSearchParams } from 'next/navigation'
 
-export default function LoginPage() {
+function LoginForm() {
   const params = useParams()
   const searchParams = useSearchParams()
   const slug = params.slug as string
@@ -101,5 +101,13 @@ export default function LoginPage() {
         </p>
       </div>
     </div>
+  )
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginForm />
+    </Suspense>
   )
 }
