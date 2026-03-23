@@ -79,7 +79,7 @@ function FieldInput({
           </select>
         )
       case 'list':
-        return <input type="text" className={base} placeholder="comma separated values" value={Array.isArray(value) ? (value as string[]).join(', ') : (value as string) ?? ''} onChange={e => onChange(e.target.value)} />
+        return <input type="text" className={base} placeholder="comma separated values" value={Array.isArray(value) ? (value as string[]).join(', ') : (value as string) ?? ''} onChange={e => onChange(e.target.value.split(',').map(s => s.trim()).filter(Boolean))} />
       default:
         return <input type="text" className={base} value={(value as string) ?? ''} onChange={e => onChange(e.target.value)} />
     }
@@ -173,10 +173,20 @@ export default function AdminShell({
 
   const col1 = (
     <div className="w-52 shrink-0 border-r border-gray-200 flex flex-col h-full overflow-y-auto">
-      <div className="px-4 py-3 border-b border-gray-200">
+      <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
         <Link href={`/p/${projectSlug}`} className="text-xs text-violet-600 hover:text-violet-800">
           ← {projectName}
         </Link>
+        <button
+          onClick={async () => {
+            await fetch('/api/auth/logout', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ projectSlug }) })
+            window.location.href = `/p/${projectSlug}/login`
+          }}
+          className="text-xs text-gray-400 hover:text-gray-600"
+          title="Sign out"
+        >
+          out
+        </button>
       </div>
       <nav className="flex-1 py-2">
         {allDatasets.map(ds => (
