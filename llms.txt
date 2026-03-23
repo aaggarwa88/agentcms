@@ -44,4 +44,4 @@ text, textarea, number, boolean, date, url, email, enum (requires enumValues), l
 6. Output adminUrl to the user
 
 ## Full docs
-https://github.com/yourusername/agentcms
+https://github.com/aaggarwa88/agentcms
