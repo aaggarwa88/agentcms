@@ -172,23 +172,16 @@ export default function AdminShell({
   // ── Column 1: Dataset nav ──────────────────────────────────────────────────
 
   const col1 = (
-    <div className="w-52 shrink-0 border-r border-gray-200 flex flex-col h-full overflow-y-auto">
-      <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
-        <Link href={`/p/${projectSlug}`} className="text-xs text-violet-600 hover:text-violet-800">
-          ← {projectName}
-        </Link>
-        <button
-          onClick={async () => {
-            await fetch('/api/auth/logout', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ projectSlug }) })
-            window.location.href = `/p/${projectSlug}/login`
-          }}
-          className="text-xs text-gray-400 hover:text-gray-600"
-          title="Sign out"
-        >
-          out
-        </button>
+    <div className="w-52 shrink-0 border-r border-gray-200 flex flex-col h-full">
+      <div className="px-4 py-3 border-b border-gray-200">
+        <div className="flex items-center gap-2">
+          <div className="w-5 h-5 bg-violet-600 rounded flex items-center justify-center shrink-0">
+            <span className="text-white font-bold text-xs">A</span>
+          </div>
+          <span className="text-sm font-semibold text-gray-800 truncate">{projectName}</span>
+        </div>
       </div>
-      <nav className="flex-1 py-2">
+      <nav className="flex-1 overflow-y-auto py-2">
         {allDatasets.map(ds => (
           <Link
             key={ds.slug}
@@ -213,6 +206,28 @@ export default function AdminShell({
           </Link>
         ))}
       </nav>
+      <div className="border-t border-gray-200 px-4 py-3">
+        <p className="text-xs text-gray-400 mb-2">Powered by AgentCMS</p>
+        <div className="flex items-center gap-3">
+          <a
+            href={`https://www.agentcms.app/api/p/${projectSlug}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-xs text-violet-600 hover:text-violet-800"
+          >
+            Visit link
+          </a>
+          <button
+            onClick={async () => {
+              await fetch('/api/auth/logout', { method: 'POST' })
+              window.location.href = `/p/${projectSlug}/login`
+            }}
+            className="text-xs text-gray-400 hover:text-gray-600"
+          >
+            Logout
+          </button>
+        </div>
+      </div>
     </div>
   )
 
