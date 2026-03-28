@@ -39,66 +39,80 @@ function LoginForm() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
-      <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-8 w-full max-w-sm">
+      <div className="bg-white border border-gray-200 rounded-xl shadow-sm w-full max-w-sm overflow-hidden">
 
         {status === 'sent' ? (
-          <div className="text-center">
-            <div className="text-3xl mb-4">📬</div>
-            <h1 className="text-lg font-semibold text-gray-900 mb-2">Check your email</h1>
-            <p className="text-sm text-gray-500">
-              We sent a magic link to <strong>{email}</strong>.
-              Click it to sign in — it expires in 15 minutes.
+          <div className="p-8 text-center">
+            <div className="text-4xl mb-4">📬</div>
+            <h1 className="text-xl font-bold text-gray-900 mb-2">Check your inbox</h1>
+            <p className="text-sm text-gray-500 leading-relaxed">
+              We sent a sign-in link to{' '}
+              <span className="font-semibold text-gray-700">{email}</span>.
+              <br />
+              Click the link in that email to access the admin panel.
+              <br />
+              <span className="text-gray-400">The link expires in 15 minutes.</span>
             </p>
             <button
-              onClick={() => setStatus('idle')}
-              className="mt-6 text-sm text-violet-600 hover:text-violet-800"
+              onClick={() => { setStatus('idle'); setEmail('') }}
+              className="mt-6 text-sm text-violet-600 hover:text-violet-800 underline underline-offset-2"
             >
-              Try a different email
+              Use a different email
             </button>
           </div>
         ) : (
           <>
-            <div className="mb-6">
-              <div className="w-8 h-8 bg-violet-600 rounded-lg mb-4 flex items-center justify-center">
-                <span className="text-white font-bold text-sm">A</span>
+            {/* Header banner */}
+            <div className="bg-violet-600 px-6 py-5">
+              <div className="flex items-center gap-2.5 mb-3">
+                <div className="w-6 h-6 bg-white/20 rounded flex items-center justify-center shrink-0">
+                  <span className="text-white font-bold text-xs">A</span>
+                </div>
+                <span className="text-white/80 text-sm font-medium">AgentCMS</span>
               </div>
-              <h1 className="text-lg font-semibold text-gray-900">Sign in to AgentCMS</h1>
-              <p className="text-sm text-gray-500 mt-1">
-                Enter your admin email to get a magic link.
+              <h1 className="text-white text-xl font-bold leading-snug">
+                What&apos;s the admin email<br />for this site?
+              </h1>
+              <p className="text-violet-200 text-sm mt-1.5">
+                Enter the email used when this site was set up. We&apos;ll send you a one-click sign-in link.
               </p>
             </div>
 
-            <form onSubmit={handleSubmit}>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Email address
-              </label>
-              <input
-                type="email"
-                required
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                placeholder="you@example.com"
-                className="border border-gray-300 rounded px-3 py-2 w-full text-sm focus:outline-none focus:ring-2 focus:ring-violet-400 mb-4"
-              />
+            {/* Form */}
+            <div className="p-6">
+              <form onSubmit={handleSubmit}>
+                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
+                  Admin email address
+                </label>
+                <input
+                  type="email"
+                  required
+                  autoFocus
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  placeholder="you@example.com"
+                  className="border border-gray-300 rounded-lg px-3 py-2.5 w-full text-sm focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-transparent mb-4"
+                />
 
-              {status === 'error' && (
-                <p className="text-sm text-red-500 mb-3">{errorMsg}</p>
-              )}
+                {status === 'error' && (
+                  <p className="text-sm text-red-500 mb-3">{errorMsg}</p>
+                )}
 
-              <button
-                type="submit"
-                disabled={status === 'loading'}
-                className="w-full bg-violet-600 text-white py-2 rounded text-sm font-medium hover:bg-violet-700 disabled:opacity-50"
-              >
-                {status === 'loading' ? 'Sending…' : 'Send magic link'}
-              </button>
-            </form>
+                <button
+                  type="submit"
+                  disabled={status === 'loading'}
+                  className="w-full bg-violet-600 text-white py-2.5 rounded-lg text-sm font-semibold hover:bg-violet-700 disabled:opacity-50 transition-colors"
+                >
+                  {status === 'loading' ? 'Sending…' : 'Send sign-in link →'}
+                </button>
+              </form>
+
+              <p className="text-xs text-gray-400 text-center mt-4">
+                /{slug} · AgentCMS
+              </p>
+            </div>
           </>
         )}
-
-        <p className="text-xs text-gray-400 text-center mt-6">
-          /{slug} · AgentCMS
-        </p>
       </div>
     </div>
   )
