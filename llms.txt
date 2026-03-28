@@ -45,6 +45,26 @@ text, textarea, number, boolean, date, url, email, enum (requires enumValues), l
 6. Implement loading state: NProgress bar + shimmer skeleton placeholders for every section
 7. Output adminUrl to the user
 
+## SEO fallbacks — required
+AgentCMS sites fetch via JS. Crawlers and social previewers may not run JS.
+Every SEO-critical tag must have a hardcoded fallback in the HTML that JS overwrites after fetch.
+
+Required tags with hardcoded fallbacks:
+- <title>                    → document.title = site.name after fetch
+- <meta name="description">  → .content = site.tagline after fetch
+- <meta property="og:title"> → .content = site.name after fetch
+- <meta property="og:description"> → .content = site.tagline after fetch
+- <meta property="og:image"> → static image URL, set once, never changes
+- <meta name="twitter:card"> → "summary_large_image", set once, never changes
+- <link rel="canonical">     → site's permanent URL, set once, never changes
+- <h1>                       → exactly one per page, hardcoded, overwritten after fetch
+- <h2>, <h3>                 → section headings hardcoded, overwritten after fetch
+
+Rules:
+- Fallback values must be real content (same as initialContent), never "Loading…" or empty
+- <h1> must appear exactly once — never empty, never inside a skeleton
+- Shimmer skeletons go inside wrapper <div>s, never replace <h1> or <h2> tags directly
+
 ## Loading state — required
 Static sites fetch in the browser. Always implement:
 - NProgress (https://unpkg.com/nprogress@0.2.0/nprogress.js) for a top progress bar

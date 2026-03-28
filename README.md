@@ -332,6 +332,68 @@ No developer needed for content changes.
 
 ---
 
+### SEO fallbacks — required for every site
+
+AgentCMS sites fetch content via JavaScript at runtime. Search engine crawlers — and social media link previewers — often see the page before JavaScript executes. If your `<h1>`, `<title>`, and `<meta>` tags are empty at parse time, the page will rank poorly and previews will be blank.
+
+**The rule:** every SEO-critical tag must have a hardcoded fallback value in the HTML. JavaScript overwrites it with live CMS data after the fetch resolves. Crawlers see the fallback; users see the live content.
+
+**Tags that must always have hardcoded fallbacks:**
+
+| Tag | Why it matters | How to handle |
+|-----|---------------|---------------|
+| `<title>` | Primary ranking signal, browser tab, social previews | Hardcode in `<head>`, update with `document.title = ...` after fetch |
+| `<meta name="description">` | Search snippet, social previews | Hardcode in `<head>`, update `.content` after fetch |
+| `<h1>` | Strongest on-page SEO signal — exactly one per page | Hardcode the site/page name, overwrite after fetch |
+| `<h2>`, `<h3>` | Section structure for crawlers | Hardcode section names, overwrite after fetch |
+| `<meta property="og:title">` | Facebook, Slack, iMessage link previews | Same value as `<title>`, update after fetch |
+| `<meta property="og:description">` | Social preview body text | Same value as `<meta description>`, update after fetch |
+| `<meta property="og:image">` | Social preview image | Hardcode a default image URL |
+| `<meta name="twitter:card">` | Twitter/X card format | Set to `summary_large_image`, never changes |
+| `<link rel="canonical">` | Prevents duplicate content penalties | Set to the site's permanent URL, never changes |
+
+**Pattern — hardcode first, overwrite after fetch:**
+
+```html
+<head>
+  <title>SAMO Track & Field</title>
+  <meta name="description"      content="Santa Monica High School Track and Field — schedules, results, and team news.">
+  <meta property="og:title"     content="SAMO Track & Field">
+  <meta property="og:description" content="Santa Monica High School Track and Field — schedules, results, and team news.">
+  <meta property="og:image"     content="https://example.com/og-image.jpg">
+  <meta name="twitter:card"     content="summary_large_image">
+  <link rel="canonical"         href="https://samo-track.netlify.app/">
+</head>
+<body>
+  <h1>SAMO Track & Field</h1>
+  <h2 id="updates-heading">Latest Updates</h2>
+  <h2 id="schedule-heading">Schedule</h2>
+  <h2 id="coaches-heading">Coaches</h2>
+  ...
+</body>
+```
+
+```js
+// After Promise.all resolves — overwrite fallbacks with live CMS data
+const siteName    = site.name    ?? "SAMO Track & Field"
+const siteTagline = site.tagline ?? "Santa Monica High School Track and Field"
+
+document.title                                                  = siteName
+document.querySelector('meta[name="description"]').content      = siteTagline
+document.querySelector('meta[property="og:title"]').content     = siteName
+document.querySelector('meta[property="og:description"]').content = siteTagline
+document.querySelector('h1').textContent                        = siteName
+```
+
+**Rules:**
+- The fallback value must be real content — use the same values you put in `initialContent`, not "Loading…" or empty strings
+- `<h1>` must appear exactly once per page — it is the page title for crawlers
+- Never set `<h1>` text to empty during the loading state — the shimmer skeleton belongs to a wrapper `<div>`, not the `<h1>` itself
+- The `<title>` and `<meta description>` fallbacks will be indexed if the crawler doesn't run JS — make them accurate and specific
+- `og:image` should be a static asset URL that never changes — it does not need to come from the CMS
+
+---
+
 ## Canonical patterns
 
 Use these as a lookup table. When you see one of these site sections, use the corresponding dataset definition.
@@ -853,6 +915,11 @@ Before finishing the build, confirm every item:
 
 ```
 ✓ Registration curl command writes JSON to a temp file with -d @file — never inlines JSON directly in the shell command
+✓ <title>, <meta description>, og:title, og:description have hardcoded fallback values — not empty, not "Loading…"
+✓ <h1> appears exactly once, has a hardcoded fallback, is never inside a shimmer skeleton
+✓ <h2> and <h3> section headings have hardcoded fallbacks that JS overwrites after fetch
+✓ og:image and twitter:card are set to static values that never change
+✓ <link rel="canonical"> is set to the site's permanent URL
 ✓ All editable content is captured in datasets — nothing left hardcoded that a non-technical user might need to change
 ✓ Dataset slugs match the visible section labels on the site, not generic canonical names
 ✓ initialContent contains real content from the site, not placeholder values
