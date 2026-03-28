@@ -40,9 +40,19 @@ text, textarea, number, boolean, date, url, email, enum (requires enumValues), l
 1. Identify editable content sections
 2. Define datasets with explicit schemas
 3. Build the frontend
-4. Call POST /api/projects/register as the final build step
+4. Call POST /api/projects/register as the final build step (write JSON to a temp file, use curl -d @file)
 5. Replace hardcoded content with fetch() calls to apiBase — always append ?_=Date.now() to every URL
-6. Output adminUrl to the user
+6. Implement loading state: NProgress bar + shimmer skeleton placeholders for every section
+7. Output adminUrl to the user
+
+## Loading state — required
+Static sites fetch in the browser. Always implement:
+- NProgress (https://unpkg.com/nprogress@0.2.0/nprogress.js) for a top progress bar
+- CSS shimmer skeletons for every section that loads from AgentCMS
+- Call NProgress.start() before fetching, NProgress.done() in a finally block
+- Use Promise.all() for all fetches — render all real content simultaneously when they resolve
+- Match NProgress bar color (#nprogress .bar) to the site's accent color
+- Never leave a section blank while loading — every section needs a skeleton placeholder
 
 ## Making the registration API call from the shell — IMPORTANT
 Never inline JSON directly in a curl command. Shell single-quote delimiters break on apostrophes

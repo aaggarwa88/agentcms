@@ -211,19 +211,91 @@ After registration succeeds, replace every hardcoded content value in the fronte
 - Collections return `[]` — always handle the empty array case with a graceful empty state.
 - Singletons return `{}` — always provide fallback values for each field.
 - **Always append `?_=Date.now()` to every fetch URL.** The Content API is cached at the CDN edge. Without this, users may see stale content for 30+ seconds after an admin saves a change.
+- **Always implement a loading state.** Static sites fetch in the browser — the page will be blank or broken for a moment while data loads. Use NProgress + shimmer skeletons so it never looks empty.
+
+**Loading state pattern — required for every site:**
+
+Use [NProgress](https://ricostacruz.com/nprogress/) for a top progress bar and CSS shimmer skeletons as section placeholders. All real content replaces the skeletons simultaneously when every fetch resolves.
+
+```html
+<!-- In <head> -->
+<link rel="stylesheet" href="https://unpkg.com/nprogress@0.2.0/nprogress.css" />
+<script src="https://unpkg.com/nprogress@0.2.0/nprogress.js"></script>
+<style>
+  /* Match NProgress bar color to the site's accent color */
+  #nprogress .bar { background: #7c3aed; height: 3px; }
+  #nprogress .peg  { box-shadow: 0 0 10px #7c3aed, 0 0 5px #7c3aed; }
+
+  /* Shimmer animation */
+  @keyframes shimmer {
+    0%   { background-position: -400px 0; }
+    100% { background-position: 400px 0; }
+  }
+  .skeleton {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 400px 100%;
+    animation: shimmer 1.4s infinite;
+    border-radius: 4px;
+  }
+</style>
+```
+
+```js
+// Skeleton markup — insert into DOM before fetching, replace after
+function renderSkeletons() {
+  // For each section that will be populated, insert skeleton placeholders
+  // matching the shape of the real content — same number of rows/cards
+  document.querySelector('.coaches-grid').innerHTML = `
+    <div class="coach-card">
+      <div class="skeleton" style="width:80px;height:80px;border-radius:50%;margin-bottom:12px"></div>
+      <div class="skeleton" style="width:70%;height:16px;margin-bottom:8px"></div>
+      <div class="skeleton" style="width:50%;height:13px"></div>
+    </div>
+  `.repeat(3)
+  // repeat for every section: announcements rows, schedule rows, stats, etc.
+}
+
+// Fetch all datasets with loading state
+async function loadContent() {
+  NProgress.start()
+  renderSkeletons()
+
+  try {
+    const cb = Date.now()
+    const [site, coaches, updates, schedule] = await Promise.all([
+      fetch(`https://www.agentcms.app/api/p/samo-track/site?_=${cb}`).then(r => r.json()),
+      fetch(`https://www.agentcms.app/api/p/samo-track/coaches?_=${cb}`).then(r => r.json()),
+      fetch(`https://www.agentcms.app/api/p/samo-track/updates?_=${cb}`).then(r => r.json()),
+      fetch(`https://www.agentcms.app/api/p/samo-track/schedule?_=${cb}`).then(r => r.json()),
+    ])
+
+    // Replace ALL skeletons with real content simultaneously
+    renderCoaches(coaches)
+    renderUpdates(updates)
+    renderSchedule(schedule)
+    renderSite(site)
+
+  } catch (err) {
+    // Fall back to hardcoded content — never show a broken UI
+    renderHardcodedFallback()
+  } finally {
+    NProgress.done()
+  }
+}
+
+loadContent()
+```
+
+**Skeleton rules:**
+- Every section that loads from AgentCMS must have a skeleton — never leave a blank white gap
+- Skeleton shapes should match the real content structure (a card skeleton looks like a card, a row skeleton looks like a row)
+- All real content renders at once after `Promise.all` resolves — never render sections one at a time as they load
+- `NProgress.done()` runs in `finally` so the bar always finishes, even on error
+- Match the NProgress bar color to the site's primary accent color
 
 **Pattern:**
 
 ```js
-// Fetch all datasets once at page load — note the cache-busting ?_= param on every URL
-const cb = Date.now()
-const [site, coaches, updates, schedule] = await Promise.all([
-  fetch(`https://www.agentcms.app/api/p/samo-track/site?_=${cb}`).then(r => r.json()),
-  fetch(`https://www.agentcms.app/api/p/samo-track/coaches?_=${cb}`).then(r => r.json()),
-  fetch(`https://www.agentcms.app/api/p/samo-track/updates?_=${cb}`).then(r => r.json()),
-  fetch(`https://www.agentcms.app/api/p/samo-track/schedule?_=${cb}`).then(r => r.json()),
-])
-
 // Singleton — provide fallbacks
 const siteName = site.name ?? "SAMO Track"
 const heroText = site.hero_text ?? ""
@@ -787,7 +859,10 @@ Before finishing the build, confirm every item:
 ✓ Registration API call succeeded and returned adminUrl and apiBase
 ✓ Every hardcoded content value has been replaced with a fetch() call to apiBase
 ✓ Every fetch URL includes ?_=Date.now() for cache busting — no bare fetch URLs without this param
-✓ All datasets are fetched once at page load — no duplicate fetch calls across components
+✓ All datasets are fetched once at page load using Promise.all — no sequential or per-component fetching
+✓ NProgress bar is included and started before fetching, finished in finally block
+✓ Every section that loads from AgentCMS has a shimmer skeleton placeholder — no blank white gaps while loading
+✓ All real content replaces skeletons simultaneously after Promise.all resolves — not one section at a time
 ✓ Images are bound dynamically via photo_url fields — no hardcoded img src values remaining
 ✓ Empty array and empty object cases are handled gracefully in the UI
 ✓ Fetch failures fall back to hardcoded initial content — no broken UI states
