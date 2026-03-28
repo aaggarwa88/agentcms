@@ -44,6 +44,21 @@ text, textarea, number, boolean, date, url, email, enum (requires enumValues), l
 5. Replace hardcoded content with fetch() calls to apiBase — always append ?_=Date.now() to every URL
 6. Output adminUrl to the user
 
+## Making the registration API call from the shell — IMPORTANT
+Never inline JSON directly in a curl command. Shell single-quote delimiters break on apostrophes
+in content values (names like "O'Brien", copy like "it's ready", etc.).
+
+Always write the payload to a temp file first, then POST it:
+
+  cat > /tmp/agentcms-register.json << 'ENDJSON'
+  { ...your JSON payload... }
+  ENDJSON
+  curl -s -X POST https://www.agentcms.app/api/projects/register \
+    -H "Content-Type: application/json" \
+    -d @/tmp/agentcms-register.json
+
+This works correctly regardless of apostrophes, quotes, or special characters in content values.
+
 ## Cache busting — required
 The Content API is cached at the CDN edge. Without a cache-busting query param, users may see
 stale content for up to 30+ seconds after an admin saves a change.

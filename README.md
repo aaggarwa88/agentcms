@@ -164,6 +164,28 @@ After the frontend is built, call `POST https://agentcms.app/api/projects/regist
 - `initialContent` for a `singleton` is a single object
 - If no `adminEmail` was provided by the user, ask for it before registering
 
+**Shell invocation — always write to a file, never inline JSON:**
+
+Content values often contain apostrophes (`O'Brien`, `it's`, `coach's`). Inlining JSON in a shell
+`curl` command with single-quote delimiters breaks on these characters. Always write the payload
+to a temp file and use `-d @file`:
+
+```bash
+cat > /tmp/agentcms-register.json << 'ENDJSON'
+{
+  "project": { "name": "My Site", "slug": "my-site" },
+  "adminEmail": "owner@example.com",
+  "datasets": [ ... ]
+}
+ENDJSON
+
+curl -s -X POST https://www.agentcms.app/api/projects/register \
+  -H "Content-Type: application/json" \
+  -d @/tmp/agentcms-register.json
+```
+
+This works correctly regardless of apostrophes, quotes, or special characters anywhere in the payload.
+
 **Response shape:**
 
 ```json
@@ -758,6 +780,7 @@ It is idempotent. Same slug + same adminEmail updates the project safely. Always
 Before finishing the build, confirm every item:
 
 ```
+✓ Registration curl command writes JSON to a temp file with -d @file — never inlines JSON directly in the shell command
 ✓ All editable content is captured in datasets — nothing left hardcoded that a non-technical user might need to change
 ✓ Dataset slugs match the visible section labels on the site, not generic canonical names
 ✓ initialContent contains real content from the site, not placeholder values
