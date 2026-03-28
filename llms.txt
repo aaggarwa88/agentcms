@@ -31,6 +31,7 @@ Response:
 ## Content API
 GET https://agentcms.app/api/p/:projectSlug/:datasetSlug
 Public. No auth. CORS open. Returns [] for collections, {} for singletons.
+Cached at the CDN for ~30s. Always append ?_=Date.now() to bust the cache and guarantee fresh content.
 
 ## Field types
 text, textarea, number, boolean, date, url, email, enum (requires enumValues), list
@@ -40,8 +41,18 @@ text, textarea, number, boolean, date, url, email, enum (requires enumValues), l
 2. Define datasets with explicit schemas
 3. Build the frontend
 4. Call POST /api/projects/register as the final build step
-5. Replace hardcoded content with fetch() calls to apiBase
+5. Replace hardcoded content with fetch() calls to apiBase — always append ?_=Date.now() to every URL
 6. Output adminUrl to the user
+
+## Cache busting — required
+The Content API is cached at the CDN edge. Without a cache-busting query param, users may see
+stale content for up to 30+ seconds after an admin saves a change.
+
+Always write fetch calls like this:
+  fetch(`https://www.agentcms.app/api/p/{slug}/{dataset}?_=${Date.now()}`)
+
+Never write:
+  fetch("https://www.agentcms.app/api/p/{slug}/{dataset}")   ← may serve stale data
 
 ## Full docs
 https://github.com/aaggarwa88/agentcms

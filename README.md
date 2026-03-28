@@ -114,7 +114,7 @@ The label the user sees in the admin panel should match the label they see on th
 | `url` | Web addresses: links, photo URLs | URL input |
 | `email` | Email addresses | Email input |
 | `enum` | Fixed set of options: status, category, type | Dropdown — requires `enumValues` |
-| `list` | Simple comma-separated list of strings | Text input |
+| `list` | List of strings | Textarea — one item per line |
 
 ---
 
@@ -188,16 +188,18 @@ After registration succeeds, replace every hardcoded content value in the fronte
 - If an `<img>` tag had a hardcoded `src`, replace it with the `photo_url` field value from the fetched data.
 - Collections return `[]` — always handle the empty array case with a graceful empty state.
 - Singletons return `{}` — always provide fallback values for each field.
+- **Always append `?_=Date.now()` to every fetch URL.** The Content API is cached at the CDN edge. Without this, users may see stale content for 30+ seconds after an admin saves a change.
 
 **Pattern:**
 
 ```js
-// Fetch all datasets once at page load
+// Fetch all datasets once at page load — note the cache-busting ?_= param on every URL
+const cb = Date.now()
 const [site, coaches, updates, schedule] = await Promise.all([
-  fetch("https://agentcms.app/api/p/samo-track/site").then(r => r.json()),
-  fetch("https://agentcms.app/api/p/samo-track/coaches").then(r => r.json()),
-  fetch("https://agentcms.app/api/p/samo-track/updates").then(r => r.json()),
-  fetch("https://agentcms.app/api/p/samo-track/schedule").then(r => r.json()),
+  fetch(`https://www.agentcms.app/api/p/samo-track/site?_=${cb}`).then(r => r.json()),
+  fetch(`https://www.agentcms.app/api/p/samo-track/coaches?_=${cb}`).then(r => r.json()),
+  fetch(`https://www.agentcms.app/api/p/samo-track/updates?_=${cb}`).then(r => r.json()),
+  fetch(`https://www.agentcms.app/api/p/samo-track/schedule?_=${cb}`).then(r => r.json()),
 ])
 
 // Singleton — provide fallbacks
@@ -517,11 +519,12 @@ Note: the `<img>` tags become `photo_url` fields of type `url`. The hardcoded im
 ### Frontend after wiring
 
 ```js
-// Fetch all datasets once at page load
+// Fetch all datasets once at page load — always include cache-busting ?_= param
+const cb = Date.now()
 const [coaches, updates, schedule] = await Promise.all([
-  fetch("https://agentcms.app/api/p/samo-track/coaches").then(r => r.json()),
-  fetch("https://agentcms.app/api/p/samo-track/updates").then(r => r.json()),
-  fetch("https://agentcms.app/api/p/samo-track/schedule").then(r => r.json()),
+  fetch(`https://www.agentcms.app/api/p/samo-track/coaches?_=${cb}`).then(r => r.json()),
+  fetch(`https://www.agentcms.app/api/p/samo-track/updates?_=${cb}`).then(r => r.json()),
+  fetch(`https://www.agentcms.app/api/p/samo-track/schedule?_=${cb}`).then(r => r.json()),
 ])
 
 // Render coaches — preserve original DOM structure, replace values only
@@ -724,6 +727,8 @@ Fall back to the hardcoded initial content you used during development. Never sh
 - Collection → `[]`
 - Singleton → `{}`
 
+> **Always append `?_=Date.now()` to fetch calls from your site.** The CDN caches responses for ~30s. Without a cache-busting param, users may see stale content after an admin edit. Use a single `const cb = Date.now()` at page load and append `?_=${cb}` to every URL.
+
 ---
 
 ## FAQ
@@ -758,6 +763,7 @@ Before finishing the build, confirm every item:
 ✓ initialContent contains real content from the site, not placeholder values
 ✓ Registration API call succeeded and returned adminUrl and apiBase
 ✓ Every hardcoded content value has been replaced with a fetch() call to apiBase
+✓ Every fetch URL includes ?_=Date.now() for cache busting — no bare fetch URLs without this param
 ✓ All datasets are fetched once at page load — no duplicate fetch calls across components
 ✓ Images are bound dynamically via photo_url fields — no hardcoded img src values remaining
 ✓ Empty array and empty object cases are handled gracefully in the UI
