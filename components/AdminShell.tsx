@@ -400,11 +400,20 @@ export default function AdminShell({
 
   const col2 = kind === 'collection' ? (
     <div className="w-64 shrink-0 border-r border-gray-800 flex flex-col h-full overflow-hidden bg-gray-900">
-      <div className="px-4 py-3 border-b border-gray-800">
-        <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-          {items.length} {items.length === 1 ? 'item' : 'items'}
-        </span>
-      </div>
+      {!readOnly && (
+        <div className="px-3 py-2.5 border-b border-gray-800 shrink-0">
+          <button
+            onClick={() => { setSelectedIndex(-1); setFormValue({}); setFieldErrors({}) }}
+            className={`w-full py-2 rounded text-sm font-medium transition-colors ${
+              selectedIndex === -1
+                ? 'bg-violet-600 text-white'
+                : 'bg-violet-600/15 text-violet-400 hover:bg-violet-600 hover:text-white'
+            }`}
+          >
+            + New
+          </button>
+        </div>
+      )}
       <div className="flex-1 overflow-y-auto">
         {items.map((item, i) => (
           <button
@@ -426,18 +435,6 @@ export default function AdminShell({
             )}
           </button>
         ))}
-        {!readOnly && (
-          <button
-            onClick={() => { setSelectedIndex(-1); setFormValue({}); setFieldErrors({}) }}
-            className={`w-full text-left px-4 py-3 text-sm transition-colors ${
-              selectedIndex === -1
-                ? 'text-violet-400 font-medium'
-                : 'text-gray-600 hover:text-gray-300 hover:bg-gray-800'
-            }`}
-          >
-            + New
-          </button>
-        )}
       </div>
       {saveStatus === 'success' && selectedIndex === null && (
         <div className="px-4 py-2 text-xs text-green-400 border-t border-gray-800">Saved</div>
