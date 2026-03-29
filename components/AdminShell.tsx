@@ -42,7 +42,7 @@ interface Props {
 type Item = Record<string, unknown>
 type SaveStatus = 'idle' | 'success' | 'error'
 
-// ─── Field input ─────────────────────────────────────────────────────────────
+// ─── Auto-expanding textarea ──────────────────────────────────────────────────
 
 function AutoTextarea({
   className,
@@ -80,6 +80,8 @@ function AutoTextarea({
   )
 }
 
+// ─── Field input ──────────────────────────────────────────────────────────────
+
 function FieldInput({
   field,
   value,
@@ -91,7 +93,7 @@ function FieldInput({
   onChange: (v: unknown) => void
   error?: string
 }) {
-  const base = 'border border-gray-700 rounded px-3 py-2 w-full text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 bg-gray-800 text-gray-100 placeholder-gray-500'
+  const base = 'border border-gray-300 dark:border-gray-700 rounded px-3 py-2 w-full text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500'
 
   const input = () => {
     switch (field.type) {
@@ -110,7 +112,7 @@ function FieldInput({
         return (
           <div className="flex items-center gap-2 mt-1">
             <input type="checkbox" id={field.key} checked={Boolean(value)} onChange={e => onChange(e.target.checked)} className="w-4 h-4 accent-violet-500" />
-            <label htmlFor={field.key} className="text-sm text-gray-400">{field.label}</label>
+            <label htmlFor={field.key} className="text-sm text-gray-600 dark:text-gray-400">{field.label}</label>
           </div>
         )
       case 'date':
@@ -144,12 +146,12 @@ function FieldInput({
   return (
     <div className="mb-4">
       {field.type !== 'boolean' && (
-        <label className="text-sm font-medium text-gray-400 mb-1 block">
-          {field.label}{field.required && <span className="text-red-400 ml-0.5">*</span>}
+        <label className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1 block">
+          {field.label}{field.required && <span className="text-red-500 dark:text-red-400 ml-0.5">*</span>}
         </label>
       )}
       {input()}
-      {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
+      {error && <p className="text-xs text-red-500 dark:text-red-400 mt-1">{error}</p>}
     </div>
   )
 }
@@ -188,6 +190,21 @@ export default function AdminShell({
   const [publicDemo, setPublicDemo] = useState<DemoMode>(initialPublicDemo)
   const [demoToggling, setDemoToggling] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [isDark, setIsDark] = useState(true)
+
+  useEffect(() => {
+    const stored = localStorage.getItem('agentcms-theme')
+    const dark = stored !== 'light'
+    setIsDark(dark)
+    document.documentElement.classList.toggle('dark', dark)
+  }, [])
+
+  function toggleTheme() {
+    const next = !isDark
+    setIsDark(next)
+    localStorage.setItem('agentcms-theme', next ? 'dark' : 'light')
+    document.documentElement.classList.toggle('dark', next)
+  }
 
   const previewUrl = typeof window !== 'undefined'
     ? `${window.location.origin}/p/${projectSlug}/preview`
@@ -200,8 +217,8 @@ export default function AdminShell({
   }
   const demoColors: Record<DemoMode, string> = {
     off:      'text-gray-500',
-    readonly: 'text-blue-400',
-    editable: 'text-green-400',
+    readonly: 'text-blue-600 dark:text-blue-400',
+    editable: 'text-green-600 dark:text-green-400',
   }
 
   async function cycleDemo() {
@@ -224,13 +241,13 @@ export default function AdminShell({
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
   }
+
   const [items, setItems] = useState<Item[]>(
     kind === 'collection' ? (currentValue as Item[]) : []
   )
   const [singletonValue, setSingletonValue] = useState<Item>(
     kind === 'singleton' ? (currentValue as Item) : {}
   )
-  // null = nothing selected, -1 = new item, >=0 = editing item at index
   const initialItems = kind === 'collection' ? (currentValue as Item[]) : []
   const [selectedIndex, setSelectedIndex] = useState<number | null>(
     kind === 'collection' && initialItems.length > 0 ? 0 : null
@@ -274,22 +291,22 @@ export default function AdminShell({
   const navBase = previewMode ? `/p/${projectSlug}/preview` : `/p/${projectSlug}`
 
   const col1 = (
-    <div className="w-52 shrink-0 border-r border-gray-800 flex flex-col h-full bg-gray-900">
-      <div className="px-4 py-3 border-b border-gray-800">
+    <div className="w-52 shrink-0 border-r border-gray-200 dark:border-gray-800 flex flex-col h-full bg-gray-50 dark:bg-gray-900">
+      <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-800">
         <div className="flex items-center gap-2">
           <div className="w-5 h-5 bg-violet-600 rounded flex items-center justify-center shrink-0">
             <span className="text-white font-bold text-xs">A</span>
           </div>
-          <span className="text-sm font-semibold text-gray-100 truncate">{projectName}</span>
+          <span className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">{projectName}</span>
         </div>
         {previewMode && (
           <div className={`mt-2 flex items-center gap-1.5 rounded px-2 py-1 ${
             readOnly
-              ? 'bg-amber-900/30 border border-amber-700'
-              : 'bg-green-900/30 border border-green-700'
+              ? 'bg-amber-50 dark:bg-amber-900/30 border border-amber-300 dark:border-amber-700'
+              : 'bg-green-50 dark:bg-green-900/30 border border-green-300 dark:border-green-700'
           }`}>
-            <span className={`text-xs ${readOnly ? 'text-amber-400' : 'text-green-400'}`}>●</span>
-            <span className={`text-xs font-medium ${readOnly ? 'text-amber-300' : 'text-green-300'}`}>
+            <span className={`text-xs ${readOnly ? 'text-amber-600 dark:text-amber-400' : 'text-green-600 dark:text-green-400'}`}>●</span>
+            <span className={`text-xs font-medium ${readOnly ? 'text-amber-700 dark:text-amber-300' : 'text-green-700 dark:text-green-300'}`}>
               {readOnly ? 'View-only preview' : 'Editable preview'}
             </span>
           </div>
@@ -302,25 +319,27 @@ export default function AdminShell({
             href={`${navBase}/${ds.slug}`}
             className={`flex items-center justify-between px-4 py-2.5 text-sm transition-colors ${
               ds.slug === currentDatasetSlug
-                ? 'bg-violet-900/30 text-violet-300 font-medium border-r-2 border-violet-500'
-                : 'text-gray-400 hover:bg-gray-800 hover:text-gray-100'
+                ? 'bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 font-medium border-r-2 border-violet-500'
+                : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100'
             }`}
           >
             <div className="min-w-0">
               <div className="truncate">{ds.name}</div>
-              <div className={`text-xs mt-0.5 truncate ${ds.slug === currentDatasetSlug ? 'text-violet-500' : 'text-gray-600'}`}>
+              <div className={`text-xs mt-0.5 truncate ${ds.slug === currentDatasetSlug ? 'text-violet-500' : 'text-gray-400 dark:text-gray-600'}`}>
                 /{ds.slug}
               </div>
             </div>
             <span className={`text-xs px-1.5 py-0.5 rounded shrink-0 ml-2 ${
-              ds.slug === currentDatasetSlug ? 'bg-violet-800/40 text-violet-400' : 'bg-gray-800 text-gray-600'
+              ds.slug === currentDatasetSlug
+                ? 'bg-violet-100 dark:bg-violet-800/40 text-violet-600 dark:text-violet-400'
+                : 'bg-gray-200 dark:bg-gray-800 text-gray-500 dark:text-gray-600'
             }`}>
               {ds.kind === 'singleton' ? '1' : '…'}
             </span>
           </Link>
         ))}
       </nav>
-      <div className="border-t border-gray-800 px-4 py-3 space-y-3">
+      <div className="border-t border-gray-200 dark:border-gray-800 px-4 py-3 space-y-3">
         {/* Demo mode controls — only shown to authenticated admin */}
         {!previewMode && (
           <div>
@@ -331,10 +350,10 @@ export default function AdminShell({
                 disabled={demoToggling}
                 className={`text-xs font-semibold px-2 py-0.5 rounded-full border transition-colors disabled:opacity-50 ${demoColors[publicDemo]} ${
                   publicDemo === 'off'
-                    ? 'border-gray-700 bg-gray-800'
+                    ? 'border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-800'
                     : publicDemo === 'readonly'
-                    ? 'border-blue-700 bg-blue-900/30'
-                    : 'border-green-700 bg-green-900/30'
+                    ? 'border-blue-300 dark:border-blue-700 bg-blue-50 dark:bg-blue-900/30'
+                    : 'border-green-300 dark:border-green-700 bg-green-50 dark:bg-green-900/30'
                 }`}
                 title="Click to cycle: Off → View only → Editable"
               >
@@ -343,14 +362,14 @@ export default function AdminShell({
             </div>
             {publicDemo !== 'off' && (
               <>
-                <div className="text-xs text-gray-600 mb-1.5">
+                <div className="text-xs text-gray-400 dark:text-gray-600 mb-1.5">
                   {publicDemo === 'readonly'
                     ? 'Anyone with the link can view — not edit'
                     : 'Anyone with the link can view and edit'}
                 </div>
                 <button
                   onClick={copyPreviewLink}
-                  className="w-full text-left text-xs text-violet-400 hover:text-violet-300 bg-violet-900/20 px-2 py-1 rounded truncate"
+                  className="w-full text-left text-xs text-violet-600 dark:text-violet-400 hover:text-violet-700 dark:hover:text-violet-300 bg-violet-50 dark:bg-violet-900/20 px-2 py-1 rounded truncate"
                   title={previewUrl}
                 >
                   {copied ? '✓ Copied!' : '⎘ Copy preview link'}
@@ -361,13 +380,13 @@ export default function AdminShell({
         )}
 
         <div>
-          <p className="text-xs text-gray-600 mb-1.5">Powered by AgentCMS</p>
+          <p className="text-xs text-gray-400 dark:text-gray-600 mb-1.5">Powered by AgentCMS</p>
           <div className="flex items-center gap-3">
             <a
               href={`https://www.agentcms.app/api/p/${projectSlug}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-xs text-violet-400 hover:text-violet-300"
+              className="text-xs text-violet-600 dark:text-violet-400 hover:text-violet-700 dark:hover:text-violet-300"
             >
               Visit link
             </a>
@@ -377,7 +396,7 @@ export default function AdminShell({
                   await fetch('/api/auth/logout', { method: 'POST' })
                   window.location.href = `/p/${projectSlug}/login`
                 }}
-                className="text-xs text-gray-600 hover:text-gray-400"
+                className="text-xs text-gray-400 dark:text-gray-600 hover:text-gray-600 dark:hover:text-gray-400"
               >
                 Logout
               </button>
@@ -385,11 +404,26 @@ export default function AdminShell({
             {previewMode && (
               <a
                 href={`/p/${projectSlug}/login`}
-                className="text-xs text-gray-600 hover:text-gray-400"
+                className="text-xs text-gray-400 dark:text-gray-600 hover:text-gray-600 dark:hover:text-gray-400"
               >
                 Sign in to edit
               </a>
             )}
+            <button
+              onClick={toggleTheme}
+              className="ml-auto text-gray-400 dark:text-gray-600 hover:text-gray-600 dark:hover:text-gray-400 transition-colors"
+              title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+            >
+              {isDark ? (
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 3a9 9 0 1 0 9 9c0-.46-.04-.92-.1-1.36a5.389 5.389 0 0 1-4.4 2.26 5.403 5.403 0 0 1-3.14-9.8c-.44-.06-.9-.1-1.36-.1z"/>
+                </svg>
+              ) : (
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 7a5 5 0 1 0 0 10A5 5 0 0 0 12 7zm0-5a1 1 0 0 1 1 1v1a1 1 0 0 1-2 0V3a1 1 0 0 1 1-1zm0 17a1 1 0 0 1 1 1v1a1 1 0 0 1-2 0v-1a1 1 0 0 1 1-1zM4.22 4.22a1 1 0 0 1 1.42 0l.7.7a1 1 0 0 1-1.41 1.42l-.71-.71a1 1 0 0 1 0-1.41zm13.02 13.02a1 1 0 0 1 1.42 0l.7.7a1 1 0 0 1-1.41 1.42l-.71-.71a1 1 0 0 1 0-1.41zM3 11h1a1 1 0 0 1 0 2H3a1 1 0 0 1 0-2zm17 0h1a1 1 0 0 1 0 2h-1a1 1 0 0 1 0-2zM4.22 19.78a1 1 0 0 1 0-1.41l.7-.71a1 1 0 1 1 1.42 1.42l-.71.7a1 1 0 0 1-1.41 0zm13.02-13.02a1 1 0 0 1 0-1.41l.7-.71a1 1 0 1 1 1.42 1.42l-.71.7a1 1 0 0 1-1.41 0z"/>
+                </svg>
+              )}
+            </button>
           </div>
         </div>
       </div>
@@ -399,15 +433,15 @@ export default function AdminShell({
   // ── Column 2: Item list (collection only) ────────────────────────────────
 
   const col2 = kind === 'collection' ? (
-    <div className="w-64 shrink-0 border-r border-gray-800 flex flex-col h-full overflow-hidden bg-gray-900">
+    <div className="w-64 shrink-0 border-r border-gray-200 dark:border-gray-800 flex flex-col h-full overflow-hidden bg-gray-50 dark:bg-gray-900">
       {!readOnly && (
-        <div className="px-3 py-2.5 border-b border-gray-800 shrink-0">
+        <div className="px-3 py-2.5 border-b border-gray-200 dark:border-gray-800 shrink-0">
           <button
             onClick={() => { setSelectedIndex(-1); setFormValue({}); setFieldErrors({}) }}
             className={`w-full py-2 rounded text-sm font-medium transition-colors ${
               selectedIndex === -1
                 ? 'bg-violet-600 text-white'
-                : 'bg-violet-600/15 text-violet-400 hover:bg-violet-600 hover:text-white'
+                : 'bg-violet-100 dark:bg-violet-600/15 text-violet-600 dark:text-violet-400 hover:bg-violet-600 hover:text-white'
             }`}
           >
             + New
@@ -419,17 +453,17 @@ export default function AdminShell({
           <button
             key={i}
             onClick={() => { setSelectedIndex(i); setFormValue({ ...item }); setFieldErrors({}) }}
-            className={`w-full text-left px-4 py-3 border-b border-gray-800 transition-colors ${
+            className={`w-full text-left px-4 py-3 border-b border-gray-200 dark:border-gray-800 transition-colors ${
               selectedIndex === i
-                ? 'bg-violet-900/20 border-l-2 border-l-violet-500'
-                : 'hover:bg-gray-800'
+                ? 'bg-violet-50 dark:bg-violet-900/20 border-l-2 border-l-violet-500'
+                : 'hover:bg-gray-100 dark:hover:bg-gray-800'
             }`}
           >
-            <div className="text-sm font-medium text-gray-200 truncate">
+            <div className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">
               {summary(item, schema.fields)}
             </div>
             {schema.fields[1] && Boolean(item[schema.fields[1].key]) && (
-              <div className="text-xs text-gray-600 truncate mt-0.5">
+              <div className="text-xs text-gray-400 dark:text-gray-600 truncate mt-0.5">
                 {String(item[schema.fields[1].key])}
               </div>
             )}
@@ -437,7 +471,7 @@ export default function AdminShell({
         ))}
       </div>
       {saveStatus === 'success' && selectedIndex === null && (
-        <div className="px-4 py-2 text-xs text-green-400 border-t border-gray-800">Saved</div>
+        <div className="px-4 py-2 text-xs text-green-600 dark:text-green-400 border-t border-gray-200 dark:border-gray-800">Saved</div>
       )}
     </div>
   ) : null
@@ -445,7 +479,7 @@ export default function AdminShell({
   // ── Column 3: Form ────────────────────────────────────────────────────────
 
   const emptyState = (
-    <div className="flex-1 flex items-center justify-center text-gray-600">
+    <div className="flex-1 flex items-center justify-center text-gray-400 dark:text-gray-600">
       <div className="text-center">
         <div className="text-3xl mb-2">←</div>
         <p className="text-sm">Select an item to edit<br />or click &ldquo;+ New&rdquo;</p>
@@ -466,9 +500,9 @@ export default function AdminShell({
           />
         ))}
 
-        <div className="flex items-center gap-3 pt-2 border-t border-gray-800 mt-2">
+        <div className="flex items-center gap-3 pt-2 border-t border-gray-200 dark:border-gray-800 mt-2">
           {readOnly ? (
-            <span className="text-xs text-amber-300 bg-amber-900/30 border border-amber-700 px-3 py-1.5 rounded">
+            <span className="text-xs text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-900/30 border border-amber-300 dark:border-amber-700 px-3 py-1.5 rounded">
               Read-only preview — sign in to edit
             </span>
           ) : (
@@ -483,7 +517,7 @@ export default function AdminShell({
               {kind === 'collection' && selectedIndex !== -1 && selectedIndex !== null && (
                 <button
                   onClick={() => { setSelectedIndex(null); setFormValue({}) }}
-                  className="text-sm text-gray-500 hover:text-gray-300"
+                  className="text-sm text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
                 >
                   Cancel
                 </button>
@@ -491,13 +525,13 @@ export default function AdminShell({
               {onDelete && (
                 <button
                   onClick={onDelete}
-                  className="ml-auto text-sm text-red-400 hover:text-red-300"
+                  className="ml-auto text-sm text-red-500 dark:text-red-400 hover:text-red-600 dark:hover:text-red-300"
                 >
                   Delete
                 </button>
               )}
-              {saveStatus === 'success' && <span className="text-sm text-green-400">Saved</span>}
-              {saveStatus === 'error' && <span className="text-sm text-red-400">Save failed — try again</span>}
+              {saveStatus === 'success' && <span className="text-sm text-green-600 dark:text-green-400">Saved</span>}
+              {saveStatus === 'error' && <span className="text-sm text-red-500 dark:text-red-400">Save failed — try again</span>}
             </>
           )}
         </div>
@@ -509,26 +543,30 @@ export default function AdminShell({
 
   const apiUrl = `https://www.agentcms.app/api/p/${projectSlug}/${currentDatasetSlug}`
 
+  const col3Header = (title: string, subtitle: string) => (
+    <div className="px-6 py-3 border-b border-gray-200 dark:border-gray-800">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">{title}</h2>
+          <p className="text-xs text-gray-500">{subtitle}</p>
+        </div>
+        <a
+          href={apiUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-xs font-mono text-violet-600 dark:text-violet-400 hover:text-violet-700 dark:hover:text-violet-300 bg-violet-50 dark:bg-violet-900/20 px-2 py-1 rounded truncate max-w-xs shrink-0"
+          title={apiUrl}
+        >
+          GET /{projectSlug}/{currentDatasetSlug}
+        </a>
+      </div>
+    </div>
+  )
+
   if (kind === 'singleton') {
     col3 = (
-      <div className="flex-1 flex flex-col h-full overflow-hidden bg-gray-950">
-        <div className="px-6 py-3 border-b border-gray-800">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <h2 className="text-sm font-semibold text-gray-100">{currentDatasetName}</h2>
-              <p className="text-xs text-gray-500">Singleton — one record</p>
-            </div>
-            <a
-              href={apiUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-xs font-mono text-violet-400 hover:text-violet-300 bg-violet-900/20 px-2 py-1 rounded truncate max-w-xs shrink-0"
-              title={apiUrl}
-            >
-              GET /{projectSlug}/{currentDatasetSlug}
-            </a>
-          </div>
-        </div>
+      <div className="flex-1 flex flex-col h-full overflow-hidden bg-white dark:bg-gray-950">
+        {col3Header(currentDatasetName, 'Singleton — one record')}
         {renderForm(
           singletonValue,
           setSingletonValue,
@@ -543,23 +581,8 @@ export default function AdminShell({
     )
   } else if (selectedIndex === null) {
     col3 = (
-      <div className="flex-1 flex flex-col h-full overflow-hidden bg-gray-950">
-        <div className="px-6 py-3 border-b border-gray-800">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <h2 className="text-sm font-semibold text-gray-100">{currentDatasetName}</h2>
-              <p className="text-xs text-gray-500">Collection</p>
-            </div>
-            <a
-              href={apiUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-xs font-mono text-violet-400 hover:text-violet-300 bg-violet-900/20 px-2 py-1 rounded truncate max-w-xs shrink-0"
-            >
-              GET /{projectSlug}/{currentDatasetSlug}
-            </a>
-          </div>
-        </div>
+      <div className="flex-1 flex flex-col h-full overflow-hidden bg-white dark:bg-gray-950">
+        {col3Header(currentDatasetName, 'Collection')}
         {emptyState}
       </div>
     )
@@ -568,23 +591,8 @@ export default function AdminShell({
     const title = isNew ? `New ${currentDatasetName.replace(/s$/, '')}` : `Edit item ${selectedIndex + 1}`
 
     col3 = (
-      <div className="flex-1 flex flex-col h-full overflow-hidden bg-gray-950">
-        <div className="px-6 py-3 border-b border-gray-800">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <h2 className="text-sm font-semibold text-gray-100">{title}</h2>
-              <p className="text-xs text-gray-500">{currentDatasetName}</p>
-            </div>
-            <a
-              href={apiUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-xs font-mono text-violet-400 hover:text-violet-300 bg-violet-900/20 px-2 py-1 rounded truncate max-w-xs shrink-0"
-            >
-              GET /{projectSlug}/{currentDatasetSlug}
-            </a>
-          </div>
-        </div>
+      <div className="flex-1 flex flex-col h-full overflow-hidden bg-white dark:bg-gray-950">
+        {col3Header(title, currentDatasetName)}
         {renderForm(
           formValue,
           setFormValue,
@@ -615,7 +623,7 @@ export default function AdminShell({
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-gray-950">
+    <div className="flex h-screen overflow-hidden bg-white dark:bg-gray-950">
       {col1}
       {col2}
       {col3}

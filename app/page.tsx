@@ -1,21 +1,21 @@
 export default function Home() {
   return (
-    <div className="min-h-screen bg-gray-950 flex flex-col items-center justify-center px-6">
+    <div className="min-h-screen bg-white dark:bg-gray-950 flex flex-col items-center justify-center px-6">
       <div className="max-w-2xl w-full text-center">
-        <h1 className="text-5xl font-bold text-gray-100 mb-4 tracking-tight">
+        <h1 className="text-5xl font-bold text-gray-900 dark:text-gray-100 mb-4 tracking-tight">
           AgentCMS
         </h1>
-        <p className="text-xl text-gray-400 mb-10">
+        <p className="text-xl text-gray-500 mb-10">
           A hosted content backend for AI-built websites.
           <br />
           Register a project, get an admin URL. That&apos;s it.
         </p>
 
-        <div className="bg-gray-900 border border-gray-700 rounded-xl p-6 text-left mb-10">
+        <div className="bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-6 text-left mb-10">
           <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
             Register a project
           </p>
-          <pre className="text-sm text-gray-300 overflow-x-auto whitespace-pre-wrap">
+          <pre className="text-sm text-gray-700 dark:text-gray-300 overflow-x-auto whitespace-pre-wrap">
 {`POST https://agentcms.app/api/projects/register
 
 {
@@ -27,36 +27,36 @@ export default function Home() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-left">
-          <div className="border border-gray-800 rounded-lg p-4">
+          <div className="border border-gray-200 dark:border-gray-800 rounded-lg p-4">
             <div className="text-2xl mb-2">⚡</div>
-            <h3 className="font-semibold text-gray-100 mb-1">Instant admin UI</h3>
+            <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-1">Instant admin UI</h3>
             <p className="text-sm text-gray-500">
               Schema-driven editor generated automatically from your field definitions.
             </p>
           </div>
-          <div className="border border-gray-800 rounded-lg p-4">
+          <div className="border border-gray-200 dark:border-gray-800 rounded-lg p-4">
             <div className="text-2xl mb-2">🔗</div>
-            <h3 className="font-semibold text-gray-100 mb-1">Public content API</h3>
+            <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-1">Public content API</h3>
             <p className="text-sm text-gray-500">
               CORS-open JSON endpoints, edge cached. Works with any frontend.
             </p>
           </div>
-          <div className="border border-gray-800 rounded-lg p-4">
+          <div className="border border-gray-200 dark:border-gray-800 rounded-lg p-4">
             <div className="text-2xl mb-2">🤖</div>
-            <h3 className="font-semibold text-gray-100 mb-1">Built for AI agents</h3>
+            <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-1">Built for AI agents</h3>
             <p className="text-sm text-gray-500">
               One API call at the end of a site build. No manual setup required.
             </p>
           </div>
         </div>
 
-        <p className="mt-10 text-sm text-gray-600">
+        <p className="mt-10 text-sm text-gray-400">
           Read the{" "}
           <a
             href="https://github.com/aaggarwa88/agentcms"
             target="_blank"
             rel="noopener noreferrer"
-            className="underline hover:text-gray-400"
+            className="underline hover:text-gray-600 dark:hover:text-gray-300"
           >
             docs on GitHub
           </a>
