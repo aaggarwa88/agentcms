@@ -106,8 +106,8 @@ The label the user sees in the admin panel should match the label they see on th
 
 | Type | Use for | Admin UI |
 |------|---------|----------|
-| `text` | Short strings: names, titles, labels | Single-line input |
-| `textarea` or `longtext` | Long strings: bios, descriptions, body copy | Auto-expanding multi-line input |
+| `text` | Short single-line values only: name, title, city, phone, tag, SKU | Single-line input |
+| `textarea` or `longtext` | **Any field likely to contain more than one short phrase** — bios, descriptions, body copy, addresses, summaries, quotes, notes, captions, mission statements, instructions | Auto-expanding multi-line input |
 | `number` | Integers or decimals: year, count, price | Number input |
 | `boolean` | On/off flags: featured, active, visible | Checkbox |
 | `date` | Calendar dates: event date, publish date | Date picker |
@@ -115,6 +115,8 @@ The label the user sees in the admin panel should match the label they see on th
 | `email` | Email addresses | Email input |
 | `enum` | Fixed set of options: status, category, type | Dropdown — requires `enumValues` |
 | `list` | List of strings | Textarea — one item per line |
+
+> **Agent tip:** When in doubt between `text` and `textarea`, always choose `textarea`. Fields like `description`, `body`, `about`, `bio`, `summary`, `content`, `notes`, `address`, `quote`, `tagline`, and `overview` should almost always be `textarea`. Using `text` for these forces editors into a tiny single-line box even when the content is long.
 
 ---
 
