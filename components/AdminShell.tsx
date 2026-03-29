@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import Link from 'next/link'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -44,6 +44,42 @@ type SaveStatus = 'idle' | 'success' | 'error'
 
 // ─── Field input ─────────────────────────────────────────────────────────────
 
+function AutoTextarea({
+  className,
+  value,
+  onChange,
+  placeholder,
+  minRows = 4,
+}: {
+  className: string
+  value: string
+  onChange: (v: string) => void
+  placeholder?: string
+  minRows?: number
+}) {
+  const ref = useRef<HTMLTextAreaElement>(null)
+
+  function resize() {
+    const el = ref.current
+    if (!el) return
+    el.style.height = 'auto'
+    el.style.height = `${el.scrollHeight}px`
+  }
+
+  useEffect(() => { resize() }, [value])
+
+  return (
+    <textarea
+      ref={ref}
+      className={className}
+      style={{ minHeight: `${minRows * 1.5}rem`, resize: 'none', overflow: 'hidden' }}
+      value={value}
+      placeholder={placeholder}
+      onChange={e => { onChange(e.target.value); resize() }}
+    />
+  )
+}
+
 function FieldInput({
   field,
   value,
@@ -60,7 +96,14 @@ function FieldInput({
   const input = () => {
     switch (field.type) {
       case 'textarea':
-        return <textarea rows={3} className={base} value={(value as string) ?? ''} onChange={e => onChange(e.target.value)} />
+        return (
+          <AutoTextarea
+            className={base}
+            value={(value as string) ?? ''}
+            onChange={v => onChange(v)}
+            minRows={5}
+          />
+        )
       case 'number':
         return <input type="number" className={base} value={(value as string) ?? ''} onChange={e => onChange(e.target.value === '' ? '' : Number(e.target.value))} />
       case 'boolean':
@@ -85,12 +128,12 @@ function FieldInput({
         )
       case 'list':
         return (
-          <textarea
-            rows={3}
+          <AutoTextarea
             className={base}
-            placeholder="One item per line"
             value={Array.isArray(value) ? (value as string[]).join('\n') : (value as string) ?? ''}
-            onChange={e => onChange(e.target.value.split('\n').map(s => s.trim()).filter(Boolean))}
+            onChange={v => onChange(v.split('\n').map(s => s.trim()).filter(Boolean))}
+            placeholder="One item per line"
+            minRows={3}
           />
         )
       default:
