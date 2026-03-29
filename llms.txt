@@ -39,11 +39,27 @@ text, textarea, number, boolean, date, url, email, enum (requires enumValues), l
 ## Agent instructions
 1. Identify editable content sections
 2. Define datasets with explicit schemas
-3. Build the frontend
-4. Call POST /api/projects/register as the final build step (write JSON to a temp file, use curl -d @file)
-5. Replace hardcoded content with fetch() calls to apiBase — always append ?_=Date.now() to every URL
-6. Implement loading state: NProgress bar + shimmer skeleton placeholders for every section
-7. Output adminUrl to the user
+3. Build the frontend AND write initialContent.json (all editable content, keyed by dataset slug)
+4. Call POST /api/projects/register using initialContent.json as the source for initialContent values
+5. Wire up two-phase fetch: load /initialContent.json first, then fetch live from apiBase with ?_=Date.now()
+6. Use initialContent.json values as SEO fallbacks in <title>, <h1>, <meta description>, og: tags
+7. Implement NProgress bar (start before fetch, done in finally block)
+8. Output adminUrl to the user
+
+## initialContent.json — required file
+Create this file alongside index.html. It is the single source of truth for initial content.
+Format: flat object keyed by dataset slug. Collections are arrays, singletons are objects.
+
+{
+  "site": { "name": "...", "tagline": "..." },
+  "coaches": [ { "name": "...", "role": "..." } ],
+  "updates": [ { "date": "...", "title": "...", "body": "..." } ]
+}
+
+Uses:
+1. Registration: read by the shell script and passed as initialContent for each dataset
+2. First-paint: fetched by the browser at /initialContent.json before AgentCMS responds
+3. SEO fallback: values used to set <title>, <h1>, <meta description>, og:title, og:description
 
 ## SEO fallbacks — required
 AgentCMS sites fetch via JS. Crawlers and social previewers may not run JS.

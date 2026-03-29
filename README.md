@@ -118,9 +118,43 @@ The label the user sees in the admin panel should match the label they see on th
 
 ---
 
-### Step 3 — Build the frontend with hardcoded content first
+### Step 3 — Build the frontend and write initialContent.json
 
-Build the complete frontend using hardcoded placeholder content. Do not wire up API calls yet. Get the UI working first.
+Build the complete frontend using real content values. Do not wire up API calls yet. Get the UI working first.
+
+**At the same time, write every piece of editable content to `initialContent.json`** — a flat object keyed by dataset slug. This file serves three purposes:
+1. It is passed directly to the registration API (`-d @initialContent.json`) — no escaping issues with apostrophes
+2. It is deployed with the site and loaded first by the browser for instant first-paint (no blank flash)
+3. It provides SEO fallback values for `<title>`, `<h1>`, `<meta description>`, etc. before the live fetch resolves
+
+**Format:**
+
+```json
+{
+  "site": {
+    "name": "SAMO Track & Field",
+    "tagline": "Santa Monica High School Track and Field",
+    "season": "2025–2026",
+    "hero_text": "Go Vikings"
+  },
+  "updates": [
+    { "date": "2026-03-18", "title": "League Meet this Saturday", "body": "Arrive by 3:30pm at Culver City HS. Bring spikes." }
+  ],
+  "coaches": [
+    { "name": "Marcus Johnson", "role": "Head Coach, Distance", "bio": "17 years coaching at SAMO.", "email": "mjohnson@smmusd.org" },
+    { "name": "Elena Rivera",   "role": "Assistant Coach, Sprints", "bio": "Former UCLA sprinter.", "email": "erivera@smmusd.org" }
+  ],
+  "schedule": [
+    { "date": "2026-03-22", "meet_name": "Bay League Finals", "location": "Malibu HS", "status": "Upcoming" }
+  ]
+}
+```
+
+**Rules for initialContent.json:**
+- Keys must exactly match dataset slugs
+- Collections are arrays, singletons are objects
+- Values must be real content from the site — not placeholder text
+- The file must be deployed alongside the HTML so the browser can fetch it at `/initialContent.json`
 
 ---
 
@@ -164,18 +198,30 @@ After the frontend is built, call `POST https://agentcms.app/api/projects/regist
 - `initialContent` for a `singleton` is a single object
 - If no `adminEmail` was provided by the user, ask for it before registering
 
-**Shell invocation — always write to a file, never inline JSON:**
+**Shell invocation — build the payload from initialContent.json:**
 
-Content values often contain apostrophes (`O'Brien`, `it's`, `coach's`). Inlining JSON in a shell
-`curl` command with single-quote delimiters breaks on these characters. Always write the payload
-to a temp file and use `-d @file`:
+Use `initialContent.json` to populate `initialContent` in each dataset. Write the full registration payload to a temp file and POST it with `-d @file` — this avoids all shell apostrophe/quoting issues:
 
 ```bash
-cat > /tmp/agentcms-register.json << 'ENDJSON'
+# Read initialContent.json into a shell variable
+CONTENT=$(cat initialContent.json)
+
+cat > /tmp/agentcms-register.json << ENDJSON
 {
-  "project": { "name": "My Site", "slug": "my-site" },
-  "adminEmail": "owner@example.com",
-  "datasets": [ ... ]
+  "project": { "name": "SAMO Track & Field", "slug": "samo-track" },
+  "adminEmail": "coach@samohi.org",
+  "datasets": [
+    {
+      "name": "Site", "slug": "site", "kind": "singleton",
+      "schema": { "fields": [ ... ] },
+      "initialContent": $(echo $CONTENT | python3 -c "import sys,json; print(json.dumps(json.load(sys.stdin)['site']))")
+    },
+    {
+      "name": "Updates", "slug": "updates", "kind": "collection",
+      "schema": { "fields": [ ... ] },
+      "initialContent": $(echo $CONTENT | python3 -c "import sys,json; print(json.dumps(json.load(sys.stdin)['updates']))")
+    }
+  ]
 }
 ENDJSON
 
@@ -184,7 +230,43 @@ curl -s -X POST https://www.agentcms.app/api/projects/register \
   -d @/tmp/agentcms-register.json
 ```
 
-This works correctly regardless of apostrophes, quotes, or special characters anywhere in the payload.
+Or more simply — build the entire registration JSON programmatically in Python or Node, reading from `initialContent.json`:
+
+```python
+import json, subprocess
+
+with open('initialContent.json') as f:
+    content = json.load(f)
+
+payload = {
+    "project": { "name": "SAMO Track & Field", "slug": "samo-track" },
+    "adminEmail": "coach@samohi.org",
+    "datasets": [
+        {
+            "name": "Site", "slug": "site", "kind": "singleton",
+            "schema": { "fields": [ ... ] },
+            "initialContent": content["site"]
+        },
+        {
+            "name": "Updates", "slug": "updates", "kind": "collection",
+            "schema": { "fields": [ ... ] },
+            "initialContent": content["updates"]
+        }
+    ]
+}
+
+with open('/tmp/agentcms-register.json', 'w') as f:
+    json.dump(payload, f)
+
+subprocess.run([
+    'curl', '-s', '-X', 'POST',
+    'https://www.agentcms.app/api/projects/register',
+    '-H', 'Content-Type: application/json',
+    '-d', '@/tmp/agentcms-register.json'
+])
+```
+
+This works correctly regardless of apostrophes, quotes, or special characters anywhere in the content.
 
 **Response shape:**
 
@@ -211,6 +293,7 @@ After registration succeeds, replace every hardcoded content value in the fronte
 - Collections return `[]` — always handle the empty array case with a graceful empty state.
 - Singletons return `{}` — always provide fallback values for each field.
 - **Always append `?_=Date.now()` to every fetch URL.** The Content API is cached at the CDN edge. Without this, users may see stale content for 30+ seconds after an admin saves a change.
+- **Load `initialContent.json` first, then fetch live data.** This gives instant first-paint with real content (good for SEO and perceived performance), then silently upgrades to live CMS data.
 - **Always implement a loading state.** Static sites fetch in the browser — the page will be blank or broken for a moment while data loads. Use NProgress + shimmer skeletons so it never looks empty.
 
 **Loading state pattern — required for every site:**
@@ -255,11 +338,23 @@ function renderSkeletons() {
   // repeat for every section: announcements rows, schedule rows, stats, etc.
 }
 
-// Fetch all datasets with loading state
+// Two-phase load: local initialContent.json first, then live AgentCMS data
 async function loadContent() {
   NProgress.start()
-  renderSkeletons()
 
+  // Phase 1 — load initialContent.json instantly (local file, no network round-trip)
+  // Renders real content immediately: good for SEO, good for perceived performance.
+  // Skeletons only show if this file is missing.
+  let initial = { site: {}, coaches: [], updates: [], schedule: [] }
+  try {
+    initial = await fetch('/initialContent.json').then(r => r.json())
+    renderAll(initial)
+    applySeoTags(initial.site ?? {})
+  } catch {
+    renderSkeletons()
+  }
+
+  // Phase 2 — fetch live data from AgentCMS (reflects admin edits)
   try {
     const cb = Date.now()
     const [site, coaches, updates, schedule] = await Promise.all([
@@ -268,52 +363,39 @@ async function loadContent() {
       fetch(`https://www.agentcms.app/api/p/samo-track/updates?_=${cb}`).then(r => r.json()),
       fetch(`https://www.agentcms.app/api/p/samo-track/schedule?_=${cb}`).then(r => r.json()),
     ])
-
-    // Replace ALL skeletons with real content simultaneously
-    renderCoaches(coaches)
-    renderUpdates(updates)
-    renderSchedule(schedule)
-    renderSite(site)
-
-  } catch (err) {
-    // Fall back to hardcoded content — never show a broken UI
-    renderHardcodedFallback()
+    renderAll({ site, coaches, updates, schedule })
+    applySeoTags(site)
+  } catch {
+    // Phase 1 data is already showing — silently do nothing
   } finally {
     NProgress.done()
   }
+}
+
+function renderAll({ site, coaches, updates, schedule }) {
+  renderSite(site)
+  renderCoaches(coaches)
+  renderUpdates(updates)
+  renderSchedule(schedule)
+}
+
+function applySeoTags(site) {
+  if (site.name)    document.title = site.name
+  if (site.tagline) document.querySelector('meta[name="description"]').content = site.tagline
+  if (site.name)    document.querySelector('meta[property="og:title"]').content = site.name
+  if (site.tagline) document.querySelector('meta[property="og:description"]').content = site.tagline
+  if (site.name)    document.querySelector('h1').textContent = site.name
 }
 
 loadContent()
 ```
 
 **Skeleton rules:**
-- Every section that loads from AgentCMS must have a skeleton — never leave a blank white gap
-- Skeleton shapes should match the real content structure (a card skeleton looks like a card, a row skeleton looks like a row)
-- All real content renders at once after `Promise.all` resolves — never render sections one at a time as they load
+- Skeletons are only needed as a fallback when `initialContent.json` is missing or fails to load
+- If Phase 1 succeeds, the page renders real content immediately — no skeleton flash at all
+- All real content renders at once — never render sections one at a time
 - `NProgress.done()` runs in `finally` so the bar always finishes, even on error
 - Match the NProgress bar color to the site's primary accent color
-
-**Pattern:**
-
-```js
-// Singleton — provide fallbacks
-const siteName = site.name ?? "SAMO Track"
-const heroText = site.hero_text ?? ""
-
-// Collection — handle empty state
-if (updates.length === 0) {
-  // render "No updates yet" state
-} else {
-  updates.forEach(update => {
-    // render update.date, update.title, update.body
-  })
-}
-
-// Image binding
-coaches.forEach(coach => {
-  // <img src={coach.photo_url} alt={coach.name} />
-})
-```
 
 ---
 
@@ -914,10 +996,12 @@ It is idempotent. Same slug + same adminEmail updates the project safely. Always
 Before finishing the build, confirm every item:
 
 ```
-✓ Registration curl command writes JSON to a temp file with -d @file — never inlines JSON directly in the shell command
-✓ <title>, <meta description>, og:title, og:description have hardcoded fallback values — not empty, not "Loading…"
-✓ <h1> appears exactly once, has a hardcoded fallback, is never inside a shimmer skeleton
-✓ <h2> and <h3> section headings have hardcoded fallbacks that JS overwrites after fetch
+✓ initialContent.json exists alongside index.html, keyed by dataset slug, containing real content
+✓ Registration uses initialContent.json as the source for initialContent values — no inline JSON in shell
+✓ Site JS loads /initialContent.json first (Phase 1) before fetching from AgentCMS (Phase 2)
+✓ <title>, <meta description>, og:title, og:description populated from initialContent.json values on Phase 1
+✓ <h1> appears exactly once, set from initialContent.json site.name, never empty
+✓ <h2> and <h3> section headings have real text values that JS may overwrite after fetch
 ✓ og:image and twitter:card are set to static values that never change
 ✓ <link rel="canonical"> is set to the site's permanent URL
 ✓ All editable content is captured in datasets — nothing left hardcoded that a non-technical user might need to change
