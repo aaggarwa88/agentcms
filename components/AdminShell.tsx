@@ -98,6 +98,7 @@ function FieldInput({
   const input = () => {
     switch (field.type) {
       case 'textarea':
+      case 'longtext':
         return (
           <AutoTextarea
             className={base}

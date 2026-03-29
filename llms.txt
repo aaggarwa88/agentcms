@@ -34,7 +34,7 @@ Public. No auth. CORS open. Returns [] for collections, {} for singletons.
 Cached at the CDN for ~30s. Always append ?_=Date.now() to bust the cache and guarantee fresh content.
 
 ## Field types
-text, textarea, number, boolean, date, url, email, enum (requires enumValues), list
+text, textarea (alias: longtext), number, boolean, date, url, email, enum (requires enumValues), list
 
 ## Agent instructions
 1. Identify editable content sections

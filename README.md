@@ -107,7 +107,7 @@ The label the user sees in the admin panel should match the label they see on th
 | Type | Use for | Admin UI |
 |------|---------|----------|
 | `text` | Short strings: names, titles, labels | Single-line input |
-| `textarea` | Long strings: bios, descriptions, body copy | Multi-line input |
+| `textarea` or `longtext` | Long strings: bios, descriptions, body copy | Auto-expanding multi-line input |
 | `number` | Integers or decimals: year, count, price | Number input |
 | `boolean` | On/off flags: featured, active, visible | Checkbox |
 | `date` | Calendar dates: event date, publish date | Date picker |
