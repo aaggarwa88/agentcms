@@ -27,7 +27,8 @@ export default async function DatasetPage({ params }: PageProps) {
   const projectId = projectDoc.id
   const projectData = projectDoc.data()
   const projectName = projectData.name as string
-  const publicDemo = projectData.publicDemo === true
+  const rawDemo = projectData.publicDemo
+  const publicDemo = rawDemo === true ? 'readonly' : (rawDemo === false || !rawDemo ? 'off' : rawDemo) as 'off' | 'readonly' | 'editable'
 
   // Fetch ALL datasets for column 1 nav
   const allDatasetsSnap = await db

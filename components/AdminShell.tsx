@@ -23,6 +23,8 @@ interface DatasetMeta {
   kind: 'collection' | 'singleton'
 }
 
+type DemoMode = 'off' | 'readonly' | 'editable'
+
 interface Props {
   projectSlug: string
   projectName: string
@@ -34,7 +36,7 @@ interface Props {
   currentValue: Record<string, unknown> | Record<string, unknown>[]
   readOnly?: boolean
   previewMode?: boolean
-  publicDemo?: boolean
+  publicDemo?: DemoMode
 }
 
 type Item = Record<string, unknown>
@@ -138,9 +140,9 @@ export default function AdminShell({
   currentValue,
   readOnly = false,
   previewMode = false,
-  publicDemo: initialPublicDemo = false,
+  publicDemo: initialPublicDemo = 'off',
 }: Props) {
-  const [publicDemo, setPublicDemo] = useState(initialPublicDemo)
+  const [publicDemo, setPublicDemo] = useState<DemoMode>(initialPublicDemo)
   const [demoToggling, setDemoToggling] = useState(false)
   const [copied, setCopied] = useState(false)
 
@@ -148,7 +150,18 @@ export default function AdminShell({
     ? `${window.location.origin}/p/${projectSlug}/preview`
     : `https://www.agentcms.app/p/${projectSlug}/preview`
 
-  async function toggleDemo() {
+  const demoLabels: Record<DemoMode, string> = {
+    off:      'Off',
+    readonly: 'View only',
+    editable: 'Editable',
+  }
+  const demoColors: Record<DemoMode, string> = {
+    off:      'text-gray-400',
+    readonly: 'text-blue-600',
+    editable: 'text-green-600',
+  }
+
+  async function cycleDemo() {
     setDemoToggling(true)
     try {
       const res = await fetch('/api/admin/toggle-demo', {
@@ -157,7 +170,7 @@ export default function AdminShell({
         body: JSON.stringify({ projectSlug }),
       })
       const data = await res.json()
-      if (res.ok) setPublicDemo(data.publicDemo)
+      if (res.ok) setPublicDemo(data.publicDemo as DemoMode)
     } finally {
       setDemoToggling(false)
     }
@@ -193,11 +206,13 @@ export default function AdminShell({
     }
   }, [saveStatus])
 
+  const saveEndpoint = previewMode ? '/api/admin/save-demo' : '/api/admin/save'
+
   const handleSave = useCallback(async (value: Item | Item[]) => {
     setSaving(true)
     setSaveStatus('idle')
     try {
-      const res = await fetch('/api/admin/save', {
+      const res = await fetch(saveEndpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ projectSlug, datasetSlug: currentDatasetSlug, value }),
@@ -209,7 +224,7 @@ export default function AdminShell({
     } finally {
       setSaving(false)
     }
-  }, [projectSlug, currentDatasetSlug])
+  }, [projectSlug, currentDatasetSlug, saveEndpoint])
 
   // ── Column 1: Dataset nav ──────────────────────────────────────────────────
 
@@ -225,9 +240,15 @@ export default function AdminShell({
           <span className="text-sm font-semibold text-gray-800 truncate">{projectName}</span>
         </div>
         {previewMode && (
-          <div className="mt-2 flex items-center gap-1.5 bg-amber-50 border border-amber-200 rounded px-2 py-1">
-            <span className="text-amber-500 text-xs">●</span>
-            <span className="text-xs text-amber-700 font-medium">Read-only preview</span>
+          <div className={`mt-2 flex items-center gap-1.5 rounded px-2 py-1 ${
+            readOnly
+              ? 'bg-amber-50 border border-amber-200'
+              : 'bg-green-50 border border-green-200'
+          }`}>
+            <span className={`text-xs ${readOnly ? 'text-amber-500' : 'text-green-500'}`}>●</span>
+            <span className={`text-xs font-medium ${readOnly ? 'text-amber-700' : 'text-green-700'}`}>
+              {readOnly ? 'View-only preview' : 'Editable preview'}
+            </span>
           </div>
         )}
       </div>
@@ -260,28 +281,38 @@ export default function AdminShell({
         {/* Demo mode controls — only shown to authenticated admin */}
         {!previewMode && (
           <div>
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-xs text-gray-500 font-medium">Public demo</span>
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-xs text-gray-500 font-medium">Share demo</span>
               <button
-                onClick={toggleDemo}
+                onClick={cycleDemo}
                 disabled={demoToggling}
-                className={`relative inline-flex h-4 w-7 items-center rounded-full transition-colors disabled:opacity-50 ${
-                  publicDemo ? 'bg-violet-600' : 'bg-gray-300'
+                className={`text-xs font-semibold px-2 py-0.5 rounded-full border transition-colors disabled:opacity-50 ${demoColors[publicDemo]} ${
+                  publicDemo === 'off'
+                    ? 'border-gray-200 bg-gray-50'
+                    : publicDemo === 'readonly'
+                    ? 'border-blue-200 bg-blue-50'
+                    : 'border-green-200 bg-green-50'
                 }`}
+                title="Click to cycle: Off → View only → Editable"
               >
-                <span className={`inline-block h-3 w-3 rounded-full bg-white shadow transition-transform ${
-                  publicDemo ? 'translate-x-3.5' : 'translate-x-0.5'
-                }`} />
+                {demoLabels[publicDemo]}
               </button>
             </div>
-            {publicDemo && (
-              <button
-                onClick={copyPreviewLink}
-                className="w-full text-left text-xs text-violet-600 hover:text-violet-800 bg-violet-50 px-2 py-1 rounded truncate"
-                title={previewUrl}
-              >
-                {copied ? '✓ Copied!' : '⎘ Copy preview link'}
-              </button>
+            {publicDemo !== 'off' && (
+              <>
+                <div className="text-xs text-gray-400 mb-1.5">
+                  {publicDemo === 'readonly'
+                    ? 'Anyone with the link can view — not edit'
+                    : 'Anyone with the link can view and edit'}
+                </div>
+                <button
+                  onClick={copyPreviewLink}
+                  className="w-full text-left text-xs text-violet-600 hover:text-violet-800 bg-violet-50 px-2 py-1 rounded truncate"
+                  title={previewUrl}
+                >
+                  {copied ? '✓ Copied!' : '⎘ Copy preview link'}
+                </button>
+              </>
             )}
           </div>
         )}

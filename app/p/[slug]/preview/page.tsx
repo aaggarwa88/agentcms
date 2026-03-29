@@ -16,7 +16,8 @@ export default async function PreviewPage({ params }: PageProps) {
 
   const projectData = projectSnap.docs[0].data()
 
-  if (!projectData.publicDemo) {
+  const demoMode = projectData.publicDemo === true ? 'readonly' : (projectData.publicDemo ?? 'off')
+  if (!demoMode || demoMode === 'off') {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
         <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-8 w-full max-w-sm text-center">

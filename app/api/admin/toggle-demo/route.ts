@@ -7,8 +7,15 @@ function getJwtSecret() {
   return new TextEncoder().encode(process.env.JWT_SECRET)
 }
 
+type DemoMode = 'off' | 'readonly' | 'editable'
+
+function nextMode(current: DemoMode): DemoMode {
+  if (current === 'off')      return 'readonly'
+  if (current === 'readonly') return 'editable'
+  return 'off'
+}
+
 export async function POST(req: NextRequest) {
-  // Verify session
   const token = req.cookies.get('agentcms_session')?.value
   if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
@@ -34,8 +41,11 @@ export async function POST(req: NextRequest) {
   if (snap.empty) return NextResponse.json({ error: 'Project not found' }, { status: 404 })
 
   const doc = snap.docs[0]
-  const current = doc.data().publicDemo ?? false
-  await doc.ref.update({ publicDemo: !current })
+  // Handle legacy boolean values
+  const raw = doc.data().publicDemo
+  const current: DemoMode = raw === true ? 'readonly' : raw === false || !raw ? 'off' : raw as DemoMode
+  const next = nextMode(current)
 
-  return NextResponse.json({ publicDemo: !current })
+  await doc.ref.update({ publicDemo: next })
+  return NextResponse.json({ publicDemo: next })
 }
