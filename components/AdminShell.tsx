@@ -434,6 +434,12 @@ export default function AdminShell({
 
   const col2 = kind === 'collection' ? (
     <div className="w-64 shrink-0 border-r border-gray-200 dark:border-gray-800 flex flex-col h-full overflow-hidden bg-gray-50 dark:bg-gray-900">
+      {/* Header — mirrors col1 style */}
+      <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-800 shrink-0">
+        <span className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">{currentDatasetName}</span>
+        <span className="ml-2 text-xs text-gray-400 dark:text-gray-600">{items.length} {items.length === 1 ? 'item' : 'items'}</span>
+      </div>
+      {/* New button */}
       {!readOnly && (
         <div className="px-3 py-2.5 border-b border-gray-200 dark:border-gray-800 shrink-0">
           <button
