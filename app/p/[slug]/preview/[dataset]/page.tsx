@@ -1,5 +1,6 @@
 import { db } from '@/lib/firebase-admin'
 import AdminShell from '@/components/AdminShell'
+import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 
 interface PageProps {
@@ -8,28 +9,39 @@ interface PageProps {
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   return {
-    title: `${params.dataset} · ${params.slug} · AgentCMS`,
+    title: `${params.dataset} · ${params.slug} · Preview · AgentCMS`,
   }
 }
 
-export default async function DatasetPage({ params }: PageProps) {
+export default async function PreviewDatasetPage({ params }: PageProps) {
   const projectSnap = await db
     .collection('projects')
     .where('slug', '==', params.slug)
     .limit(1)
     .get()
 
-  if (projectSnap.empty) {
-    return <div className="p-8 text-gray-500">Project not found</div>
-  }
+  if (projectSnap.empty) notFound()
 
   const projectDoc = projectSnap.docs[0]
-  const projectId = projectDoc.id
   const projectData = projectDoc.data()
-  const projectName = projectData.name as string
-  const publicDemo = projectData.publicDemo === true
 
-  // Fetch ALL datasets for column 1 nav
+  if (!projectData.publicDemo) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+        <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-8 w-full max-w-sm text-center">
+          <div className="text-3xl mb-4">🔒</div>
+          <h1 className="text-lg font-semibold text-gray-900 mb-2">Demo not enabled</h1>
+          <p className="text-sm text-gray-500">
+            The owner of this project hasn&apos;t enabled public preview mode.
+          </p>
+        </div>
+      </div>
+    )
+  }
+
+  const projectId = projectDoc.id
+  const projectName = projectData.name as string
+
   const allDatasetsSnap = await db
     .collection(`projects/${projectId}/datasets`)
     .orderBy('createdAt', 'asc')
@@ -41,33 +53,23 @@ export default async function DatasetPage({ params }: PageProps) {
     kind: d.data().kind as 'collection' | 'singleton',
   }))
 
-  // Current dataset
   const datasetSnap = await db
     .collection(`projects/${projectId}/datasets`)
     .where('slug', '==', params.dataset)
     .limit(1)
     .get()
 
-  if (datasetSnap.empty) {
-    return <div className="p-8 text-gray-500">Dataset not found</div>
-  }
+  if (datasetSnap.empty) notFound()
 
   const datasetDoc = datasetSnap.docs[0]
-  const datasetId = datasetDoc.id
   const datasetData = datasetDoc.data()
   const kind = datasetData.kind as 'collection' | 'singleton'
   const schema = datasetData.schema as {
-    fields: {
-      key: string
-      label: string
-      type: string
-      required?: boolean
-      enumValues?: string[]
-    }[]
+    fields: { key: string; label: string; type: string; required?: boolean; enumValues?: string[] }[]
   }
 
   const contentsSnap = await db
-    .collection(`projects/${projectId}/datasets/${datasetId}/contents`)
+    .collection(`projects/${projectId}/datasets/${datasetDoc.id}/contents`)
     .orderBy('updatedAt', 'desc')
     .limit(1)
     .get()
@@ -86,7 +88,8 @@ export default async function DatasetPage({ params }: PageProps) {
       schema={schema}
       kind={kind}
       currentValue={currentValue}
-      publicDemo={publicDemo}
+      readOnly
+      previewMode
     />
   )
 }

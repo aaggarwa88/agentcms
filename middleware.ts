@@ -15,8 +15,9 @@ export async function middleware(req: NextRequest) {
 
   const projectSlug = match[1]
 
-  // Don't protect the login page itself
+  // Don't protect the login page or public preview routes
   if (pathname === `/p/${projectSlug}/login`) return NextResponse.next()
+  if (pathname.startsWith(`/p/${projectSlug}/preview`)) return NextResponse.next()
 
   const token = req.cookies.get('agentcms_session')?.value
 
