@@ -198,6 +198,11 @@ export default function AdminShell({
   const [saving, setSaving] = useState(false)
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle')
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
+  const [viewMode, setViewMode] = useState<'form' | 'table'>('form')
+  // table view tracks a local copy of all rows for bulk editing
+  const [tableRows, setTableRows] = useState<Item[]>(
+    kind === 'collection' ? (currentValue as Item[]) : []
+  )
 
   useEffect(() => {
     if (saveStatus === 'success') {
@@ -353,26 +358,44 @@ export default function AdminShell({
     </div>
   )
 
-  // ── Column 2: Item list (collection only) ─────────────────────────────────
+  // ── Column 2: Item list (collection only, form mode) ─────────────────────
 
-  const col2 = kind === 'collection' ? (
+  const viewToggle = kind === 'collection' ? (
+    <div className="flex items-center gap-0.5 bg-gray-100 rounded p-0.5">
+      <button
+        onClick={() => setViewMode('form')}
+        className={`text-xs px-2 py-0.5 rounded transition-colors ${viewMode === 'form' ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+        title="Form view"
+      >≡ Form</button>
+      <button
+        onClick={() => { setViewMode('table'); setTableRows([...items]) }}
+        className={`text-xs px-2 py-0.5 rounded transition-colors ${viewMode === 'table' ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+        title="Table view"
+      >⊞ Table</button>
+    </div>
+  ) : null
+
+  const col2 = (kind === 'collection' && viewMode === 'form') ? (
     <div className="w-64 shrink-0 border-r border-gray-200 flex flex-col h-full overflow-hidden">
       <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
         <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
           {items.length} {items.length === 1 ? 'item' : 'items'}
         </span>
-        {!readOnly && (
-          <button
-            onClick={() => { setSelectedIndex(-1); setFormValue({}); setFieldErrors({}) }}
-            className={`text-xs px-2.5 py-1 rounded border transition-colors ${
-              selectedIndex === -1
-                ? 'bg-violet-600 text-white border-violet-600'
-                : 'border-gray-300 text-gray-600 hover:bg-gray-50'
-            }`}
-          >
-            + New
-          </button>
-        )}
+        <div className="flex items-center gap-2">
+          {viewToggle}
+          {!readOnly && (
+            <button
+              onClick={() => { setSelectedIndex(-1); setFormValue({}); setFieldErrors({}) }}
+              className={`text-xs px-2.5 py-1 rounded border transition-colors ${
+                selectedIndex === -1
+                  ? 'bg-violet-600 text-white border-violet-600'
+                  : 'border-gray-300 text-gray-600 hover:bg-gray-50'
+              }`}
+            >
+              + New
+            </button>
+          )}
+        </div>
       </div>
       <div className="flex-1 overflow-y-auto">
         {items.length === 0 && selectedIndex !== -1 && (
@@ -404,6 +427,140 @@ export default function AdminShell({
       {saveStatus === 'success' && selectedIndex === null && (
         <div className="px-4 py-2 text-xs text-green-600 border-t border-gray-100">Saved</div>
       )}
+    </div>
+  ) : null
+
+  // ── Table view (collection, table mode) ───────────────────────────────────
+
+  function updateTableCell(rowIdx: number, key: string, val: unknown) {
+    setTableRows(prev => prev.map((r, i) => i === rowIdx ? { ...r, [key]: val } : r))
+  }
+
+  const tableView = (kind === 'collection' && viewMode === 'table') ? (
+    <div className="flex-1 flex flex-col h-full overflow-hidden">
+      <div className="px-5 py-3 border-b border-gray-200 flex items-center justify-between gap-4 shrink-0">
+        <div className="flex items-center gap-3">
+          <h2 className="text-sm font-semibold text-gray-800">{currentDatasetName}</h2>
+          <span className="text-xs text-gray-400">{tableRows.length} {tableRows.length === 1 ? 'row' : 'rows'}</span>
+          {viewToggle}
+        </div>
+        <div className="flex items-center gap-3">
+          {saveStatus === 'success' && <span className="text-xs text-green-600">Saved</span>}
+          {saveStatus === 'error'   && <span className="text-xs text-red-500">Save failed</span>}
+          {!readOnly && (
+            <button
+              onClick={() => {
+                setItems(tableRows)
+                handleSave(tableRows)
+              }}
+              disabled={saving}
+              className="bg-violet-600 text-white px-3 py-1.5 rounded text-xs font-medium hover:bg-violet-700 disabled:opacity-50"
+            >
+              {saving ? 'Saving…' : 'Save all'}
+            </button>
+          )}
+          {readOnly && (
+            <span className="text-xs text-amber-600 bg-amber-50 border border-amber-200 px-2 py-1 rounded">Read-only preview</span>
+          )}
+        </div>
+      </div>
+      <div className="flex-1 overflow-auto">
+        <table className="w-full text-sm border-collapse min-w-max">
+          <thead className="sticky top-0 z-10">
+            <tr className="bg-gray-50 border-b border-gray-200">
+              <th className="text-left px-3 py-2 text-xs font-semibold text-gray-500 w-8">#</th>
+              {schema.fields.map(f => (
+                <th key={f.key} className="text-left px-3 py-2 text-xs font-semibold text-gray-500 whitespace-nowrap">
+                  {f.label}{f.required && <span className="text-red-400 ml-0.5">*</span>}
+                </th>
+              ))}
+              {!readOnly && <th className="w-8" />}
+            </tr>
+          </thead>
+          <tbody>
+            {tableRows.map((row, rowIdx) => (
+              <tr key={rowIdx} className="border-b border-gray-100 hover:bg-gray-50 group">
+                <td className="px-3 py-1.5 text-xs text-gray-400">{rowIdx + 1}</td>
+                {schema.fields.map(f => (
+                  <td key={f.key} className="px-2 py-1.5">
+                    {f.type === 'boolean' ? (
+                      <input
+                        type="checkbox"
+                        checked={Boolean(row[f.key])}
+                        onChange={e => !readOnly && updateTableCell(rowIdx, f.key, e.target.checked)}
+                        disabled={readOnly}
+                        className="w-4 h-4 accent-violet-600"
+                      />
+                    ) : f.type === 'enum' ? (
+                      <select
+                        value={(row[f.key] as string) ?? ''}
+                        onChange={e => !readOnly && updateTableCell(rowIdx, f.key, e.target.value)}
+                        disabled={readOnly}
+                        className="border border-gray-200 rounded px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-violet-400 bg-white disabled:bg-gray-50 w-full min-w-[80px]"
+                      >
+                        <option value="">—</option>
+                        {f.enumValues?.map(o => <option key={o} value={o}>{o}</option>)}
+                      </select>
+                    ) : (
+                      <input
+                        type={f.type === 'number' ? 'number' : f.type === 'date' ? 'date' : f.type === 'url' ? 'url' : f.type === 'email' ? 'email' : 'text'}
+                        value={
+                          f.type === 'list'
+                            ? (Array.isArray(row[f.key]) ? (row[f.key] as string[]).join(', ') : (row[f.key] as string) ?? '')
+                            : (row[f.key] as string) ?? ''
+                        }
+                        onChange={e => {
+                          if (readOnly) return
+                          const val = f.type === 'number'
+                            ? (e.target.value === '' ? '' : Number(e.target.value))
+                            : f.type === 'list'
+                            ? e.target.value.split(',').map(s => s.trim()).filter(Boolean)
+                            : e.target.value
+                          updateTableCell(rowIdx, f.key, val)
+                        }}
+                        readOnly={readOnly}
+                        placeholder={f.type === 'list' ? 'a, b, c' : ''}
+                        className="border border-transparent hover:border-gray-200 focus:border-violet-400 rounded px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-violet-400 bg-transparent focus:bg-white w-full min-w-[100px] read-only:cursor-default"
+                      />
+                    )}
+                  </td>
+                ))}
+                {!readOnly && (
+                  <td className="px-2 py-1.5">
+                    <button
+                      onClick={() => {
+                        const updated = tableRows.filter((_, i) => i !== rowIdx)
+                        setTableRows(updated)
+                      }}
+                      className="opacity-0 group-hover:opacity-100 text-gray-300 hover:text-red-400 transition-all text-base leading-none"
+                      title="Delete row"
+                    >×</button>
+                  </td>
+                )}
+              </tr>
+            ))}
+            {!readOnly && (
+              <tr>
+                <td colSpan={schema.fields.length + 2} className="px-3 py-2">
+                  <button
+                    onClick={() => setTableRows(prev => [...prev, {}])}
+                    className="text-xs text-violet-600 hover:text-violet-800"
+                  >
+                    + Add row
+                  </button>
+                </td>
+              </tr>
+            )}
+            {tableRows.length === 0 && readOnly && (
+              <tr>
+                <td colSpan={schema.fields.length + 1} className="px-3 py-8 text-xs text-gray-400 text-center">
+                  No items yet.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   ) : null
 
@@ -582,8 +739,12 @@ export default function AdminShell({
   return (
     <div className="flex h-screen overflow-hidden bg-white">
       {col1}
-      {col2}
-      {col3}
+      {viewMode === 'table' ? tableView : (
+        <>
+          {col2}
+          {col3}
+        </>
+      )}
     </div>
   )
 }
