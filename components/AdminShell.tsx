@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import Link from 'next/link'
+import ReactMarkdown from 'react-markdown'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -82,6 +83,62 @@ function AutoTextarea({
 
 // ─── Field input ──────────────────────────────────────────────────────────────
 
+function MarkdownField({
+  value,
+  onChange,
+  base,
+}: {
+  value: string
+  onChange: (v: string) => void
+  base: string
+}) {
+  const [tab, setTab] = useState<'write' | 'preview'>('write')
+  return (
+    <div>
+      <div className="flex items-center gap-1 mb-1.5">
+        <button
+          type="button"
+          onClick={() => setTab('write')}
+          className={`text-xs px-2.5 py-0.5 rounded transition-colors ${
+            tab === 'write'
+              ? 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-100 font-medium'
+              : 'text-gray-400 dark:text-gray-600 hover:text-gray-600 dark:hover:text-gray-400'
+          }`}
+        >
+          Write
+        </button>
+        <button
+          type="button"
+          onClick={() => setTab('preview')}
+          className={`text-xs px-2.5 py-0.5 rounded transition-colors ${
+            tab === 'preview'
+              ? 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-100 font-medium'
+              : 'text-gray-400 dark:text-gray-600 hover:text-gray-600 dark:hover:text-gray-400'
+          }`}
+        >
+          Preview
+        </button>
+        <span className="ml-1 text-xs text-gray-300 dark:text-gray-700">Markdown</span>
+      </div>
+      {tab === 'write' ? (
+        <AutoTextarea
+          className={base}
+          value={value}
+          onChange={onChange}
+          minRows={5}
+        />
+      ) : (
+        <div className={`${base} min-h-[7.5rem] prose prose-sm dark:prose-invert max-w-none`}>
+          {value.trim()
+            ? <ReactMarkdown>{value}</ReactMarkdown>
+            : <span className="text-gray-400 dark:text-gray-600 italic not-prose">Nothing to preview.</span>
+          }
+        </div>
+      )}
+    </div>
+  )
+}
+
 function FieldInput({
   field,
   value,
@@ -100,11 +157,10 @@ function FieldInput({
       case 'textarea':
       case 'longtext':
         return (
-          <AutoTextarea
-            className={base}
+          <MarkdownField
             value={(value as string) ?? ''}
             onChange={v => onChange(v)}
-            minRows={5}
+            base={base}
           />
         )
       case 'number':
