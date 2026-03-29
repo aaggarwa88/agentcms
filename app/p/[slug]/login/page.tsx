@@ -38,24 +38,24 @@ function LoginForm() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
-      <div className="bg-white border border-gray-200 rounded-xl shadow-sm w-full max-w-sm overflow-hidden">
+    <div className="min-h-screen bg-gray-950 flex items-center justify-center px-4">
+      <div className="bg-gray-900 border border-gray-700 rounded-xl shadow-xl w-full max-w-sm overflow-hidden">
 
         {status === 'sent' ? (
           <div className="p-8 text-center">
             <div className="text-4xl mb-4">📬</div>
-            <h1 className="text-xl font-bold text-gray-900 mb-2">Check your inbox</h1>
-            <p className="text-sm text-gray-500 leading-relaxed">
+            <h1 className="text-xl font-bold text-gray-100 mb-2">Check your inbox</h1>
+            <p className="text-sm text-gray-400 leading-relaxed">
               We sent a sign-in link to{' '}
-              <span className="font-semibold text-gray-700">{email}</span>.
+              <span className="font-semibold text-gray-200">{email}</span>.
               <br />
               Click the link in that email to access the admin panel.
               <br />
-              <span className="text-gray-400">The link expires in 15 minutes.</span>
+              <span className="text-gray-600">The link expires in 15 minutes.</span>
             </p>
             <button
               onClick={() => { setStatus('idle'); setEmail('') }}
-              className="mt-6 text-sm text-violet-600 hover:text-violet-800 underline underline-offset-2"
+              className="mt-6 text-sm text-violet-400 hover:text-violet-300 underline underline-offset-2"
             >
               Use a different email
             </button>
@@ -91,11 +91,11 @@ function LoginForm() {
                   value={email}
                   onChange={e => setEmail(e.target.value)}
                   placeholder="you@example.com"
-                  className="border border-gray-300 rounded-lg px-3 py-2.5 w-full text-sm focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-transparent mb-4"
+                  className="border border-gray-700 rounded-lg px-3 py-2.5 w-full text-sm text-gray-100 bg-gray-800 placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent mb-4"
                 />
 
                 {status === 'error' && (
-                  <p className="text-sm text-red-500 mb-3">{errorMsg}</p>
+                  <p className="text-sm text-red-400 mb-3">{errorMsg}</p>
                 )}
 
                 <button
@@ -107,7 +107,7 @@ function LoginForm() {
                 </button>
               </form>
 
-              <p className="text-xs text-gray-400 text-center mt-4">
+              <p className="text-xs text-gray-600 text-center mt-4">
                 /{slug} · AgentCMS
               </p>
             </div>

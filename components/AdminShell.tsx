@@ -55,7 +55,7 @@ function FieldInput({
   onChange: (v: unknown) => void
   error?: string
 }) {
-  const base = 'border border-gray-300 rounded px-3 py-2 w-full text-sm focus:outline-none focus:ring-2 focus:ring-violet-400'
+  const base = 'border border-gray-700 rounded px-3 py-2 w-full text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 bg-gray-800 text-gray-100 placeholder-gray-500'
 
   const input = () => {
     switch (field.type) {
@@ -66,8 +66,8 @@ function FieldInput({
       case 'boolean':
         return (
           <div className="flex items-center gap-2 mt-1">
-            <input type="checkbox" id={field.key} checked={Boolean(value)} onChange={e => onChange(e.target.checked)} className="w-4 h-4 accent-violet-600" />
-            <label htmlFor={field.key} className="text-sm text-gray-600">{field.label}</label>
+            <input type="checkbox" id={field.key} checked={Boolean(value)} onChange={e => onChange(e.target.checked)} className="w-4 h-4 accent-violet-500" />
+            <label htmlFor={field.key} className="text-sm text-gray-400">{field.label}</label>
           </div>
         )
       case 'date':
@@ -101,8 +101,8 @@ function FieldInput({
   return (
     <div className="mb-4">
       {field.type !== 'boolean' && (
-        <label className="text-sm font-medium text-gray-700 mb-1 block">
-          {field.label}{field.required && <span className="text-red-500 ml-0.5">*</span>}
+        <label className="text-sm font-medium text-gray-400 mb-1 block">
+          {field.label}{field.required && <span className="text-red-400 ml-0.5">*</span>}
         </label>
       )}
       {input()}
@@ -156,9 +156,9 @@ export default function AdminShell({
     editable: 'Editable',
   }
   const demoColors: Record<DemoMode, string> = {
-    off:      'text-gray-400',
-    readonly: 'text-blue-600',
-    editable: 'text-green-600',
+    off:      'text-gray-500',
+    readonly: 'text-blue-400',
+    editable: 'text-green-400',
   }
 
   async function cycleDemo() {
@@ -236,22 +236,22 @@ export default function AdminShell({
   const navBase = previewMode ? `/p/${projectSlug}/preview` : `/p/${projectSlug}`
 
   const col1 = (
-    <div className="w-52 shrink-0 border-r border-gray-200 flex flex-col h-full">
-      <div className="px-4 py-3 border-b border-gray-200">
+    <div className="w-52 shrink-0 border-r border-gray-800 flex flex-col h-full bg-gray-900">
+      <div className="px-4 py-3 border-b border-gray-800">
         <div className="flex items-center gap-2">
           <div className="w-5 h-5 bg-violet-600 rounded flex items-center justify-center shrink-0">
             <span className="text-white font-bold text-xs">A</span>
           </div>
-          <span className="text-sm font-semibold text-gray-800 truncate">{projectName}</span>
+          <span className="text-sm font-semibold text-gray-100 truncate">{projectName}</span>
         </div>
         {previewMode && (
           <div className={`mt-2 flex items-center gap-1.5 rounded px-2 py-1 ${
             readOnly
-              ? 'bg-amber-50 border border-amber-200'
-              : 'bg-green-50 border border-green-200'
+              ? 'bg-amber-900/30 border border-amber-700'
+              : 'bg-green-900/30 border border-green-700'
           }`}>
-            <span className={`text-xs ${readOnly ? 'text-amber-500' : 'text-green-500'}`}>●</span>
-            <span className={`text-xs font-medium ${readOnly ? 'text-amber-700' : 'text-green-700'}`}>
+            <span className={`text-xs ${readOnly ? 'text-amber-400' : 'text-green-400'}`}>●</span>
+            <span className={`text-xs font-medium ${readOnly ? 'text-amber-300' : 'text-green-300'}`}>
               {readOnly ? 'View-only preview' : 'Editable preview'}
             </span>
           </div>
@@ -264,25 +264,25 @@ export default function AdminShell({
             href={`${navBase}/${ds.slug}`}
             className={`flex items-center justify-between px-4 py-2.5 text-sm transition-colors ${
               ds.slug === currentDatasetSlug
-                ? 'bg-violet-50 text-violet-700 font-medium border-r-2 border-violet-600'
-                : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                ? 'bg-violet-900/30 text-violet-300 font-medium border-r-2 border-violet-500'
+                : 'text-gray-400 hover:bg-gray-800 hover:text-gray-100'
             }`}
           >
             <div className="min-w-0">
               <div className="truncate">{ds.name}</div>
-              <div className={`text-xs mt-0.5 truncate ${ds.slug === currentDatasetSlug ? 'text-violet-400' : 'text-gray-400'}`}>
+              <div className={`text-xs mt-0.5 truncate ${ds.slug === currentDatasetSlug ? 'text-violet-500' : 'text-gray-600'}`}>
                 /{ds.slug}
               </div>
             </div>
             <span className={`text-xs px-1.5 py-0.5 rounded shrink-0 ml-2 ${
-              ds.slug === currentDatasetSlug ? 'bg-violet-100 text-violet-600' : 'bg-gray-100 text-gray-400'
+              ds.slug === currentDatasetSlug ? 'bg-violet-800/40 text-violet-400' : 'bg-gray-800 text-gray-600'
             }`}>
               {ds.kind === 'singleton' ? '1' : '…'}
             </span>
           </Link>
         ))}
       </nav>
-      <div className="border-t border-gray-200 px-4 py-3 space-y-3">
+      <div className="border-t border-gray-800 px-4 py-3 space-y-3">
         {/* Demo mode controls — only shown to authenticated admin */}
         {!previewMode && (
           <div>
@@ -293,10 +293,10 @@ export default function AdminShell({
                 disabled={demoToggling}
                 className={`text-xs font-semibold px-2 py-0.5 rounded-full border transition-colors disabled:opacity-50 ${demoColors[publicDemo]} ${
                   publicDemo === 'off'
-                    ? 'border-gray-200 bg-gray-50'
+                    ? 'border-gray-700 bg-gray-800'
                     : publicDemo === 'readonly'
-                    ? 'border-blue-200 bg-blue-50'
-                    : 'border-green-200 bg-green-50'
+                    ? 'border-blue-700 bg-blue-900/30'
+                    : 'border-green-700 bg-green-900/30'
                 }`}
                 title="Click to cycle: Off → View only → Editable"
               >
@@ -305,14 +305,14 @@ export default function AdminShell({
             </div>
             {publicDemo !== 'off' && (
               <>
-                <div className="text-xs text-gray-400 mb-1.5">
+                <div className="text-xs text-gray-600 mb-1.5">
                   {publicDemo === 'readonly'
                     ? 'Anyone with the link can view — not edit'
                     : 'Anyone with the link can view and edit'}
                 </div>
                 <button
                   onClick={copyPreviewLink}
-                  className="w-full text-left text-xs text-violet-600 hover:text-violet-800 bg-violet-50 px-2 py-1 rounded truncate"
+                  className="w-full text-left text-xs text-violet-400 hover:text-violet-300 bg-violet-900/20 px-2 py-1 rounded truncate"
                   title={previewUrl}
                 >
                   {copied ? '✓ Copied!' : '⎘ Copy preview link'}
@@ -323,13 +323,13 @@ export default function AdminShell({
         )}
 
         <div>
-          <p className="text-xs text-gray-400 mb-1.5">Powered by AgentCMS</p>
+          <p className="text-xs text-gray-600 mb-1.5">Powered by AgentCMS</p>
           <div className="flex items-center gap-3">
             <a
               href={`https://www.agentcms.app/api/p/${projectSlug}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-xs text-violet-600 hover:text-violet-800"
+              className="text-xs text-violet-400 hover:text-violet-300"
             >
               Visit link
             </a>
@@ -339,7 +339,7 @@ export default function AdminShell({
                   await fetch('/api/auth/logout', { method: 'POST' })
                   window.location.href = `/p/${projectSlug}/login`
                 }}
-                className="text-xs text-gray-400 hover:text-gray-600"
+                className="text-xs text-gray-600 hover:text-gray-400"
               >
                 Logout
               </button>
@@ -347,7 +347,7 @@ export default function AdminShell({
             {previewMode && (
               <a
                 href={`/p/${projectSlug}/login`}
-                className="text-xs text-gray-400 hover:text-gray-600"
+                className="text-xs text-gray-600 hover:text-gray-400"
               >
                 Sign in to edit
               </a>
@@ -361,23 +361,23 @@ export default function AdminShell({
   // ── Column 2: Item list (collection only, form mode) ─────────────────────
 
   const viewToggle = kind === 'collection' ? (
-    <div className="flex items-center gap-0.5 bg-gray-100 rounded p-0.5">
+    <div className="flex items-center gap-0.5 bg-gray-800 rounded p-0.5">
       <button
         onClick={() => setViewMode('form')}
-        className={`text-xs px-2 py-0.5 rounded transition-colors ${viewMode === 'form' ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+        className={`text-xs px-2 py-0.5 rounded transition-colors ${viewMode === 'form' ? 'bg-gray-700 text-gray-100 shadow-sm' : 'text-gray-500 hover:text-gray-300'}`}
         title="Form view"
       >≡ Form</button>
       <button
         onClick={() => { setViewMode('table'); setTableRows([...items]) }}
-        className={`text-xs px-2 py-0.5 rounded transition-colors ${viewMode === 'table' ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+        className={`text-xs px-2 py-0.5 rounded transition-colors ${viewMode === 'table' ? 'bg-gray-700 text-gray-100 shadow-sm' : 'text-gray-500 hover:text-gray-300'}`}
         title="Table view"
       >⊞ Table</button>
     </div>
   ) : null
 
   const col2 = (kind === 'collection' && viewMode === 'form') ? (
-    <div className="w-64 shrink-0 border-r border-gray-200 flex flex-col h-full overflow-hidden">
-      <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
+    <div className="w-64 shrink-0 border-r border-gray-800 flex flex-col h-full overflow-hidden bg-gray-900">
+      <div className="px-4 py-3 border-b border-gray-800 flex items-center justify-between">
         <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
           {items.length} {items.length === 1 ? 'item' : 'items'}
         </span>
@@ -385,12 +385,12 @@ export default function AdminShell({
           {viewToggle}
           {!readOnly && (
             <button
-              onClick={() => { setSelectedIndex(-1); setFormValue({}); setFieldErrors({}) }}
-              className={`text-xs px-2.5 py-1 rounded border transition-colors ${
-                selectedIndex === -1
-                  ? 'bg-violet-600 text-white border-violet-600'
-                  : 'border-gray-300 text-gray-600 hover:bg-gray-50'
-              }`}
+          onClick={() => { setSelectedIndex(-1); setFormValue({}); setFieldErrors({}) }}
+            className={`text-xs px-2.5 py-1 rounded border transition-colors ${
+              selectedIndex === -1
+                ? 'bg-violet-600 text-white border-violet-600'
+                : 'border-gray-700 text-gray-400 hover:bg-gray-800 hover:text-gray-200'
+            }`}
             >
               + New
             </button>
@@ -407,17 +407,17 @@ export default function AdminShell({
           <button
             key={i}
             onClick={() => { setSelectedIndex(i); setFormValue({ ...item }); setFieldErrors({}) }}
-            className={`w-full text-left px-4 py-3 border-b border-gray-100 transition-colors ${
+            className={`w-full text-left px-4 py-3 border-b border-gray-800 transition-colors ${
               selectedIndex === i
-                ? 'bg-violet-50 border-l-2 border-l-violet-500'
-                : 'hover:bg-gray-50'
+                ? 'bg-violet-900/20 border-l-2 border-l-violet-500'
+                : 'hover:bg-gray-800'
             }`}
           >
-            <div className="text-sm font-medium text-gray-800 truncate">
+            <div className="text-sm font-medium text-gray-200 truncate">
               {summary(item, schema.fields)}
             </div>
             {schema.fields[1] && Boolean(item[schema.fields[1].key]) && (
-              <div className="text-xs text-gray-400 truncate mt-0.5">
+              <div className="text-xs text-gray-600 truncate mt-0.5">
                 {String(item[schema.fields[1].key])}
               </div>
             )}
@@ -425,7 +425,7 @@ export default function AdminShell({
         ))}
       </div>
       {saveStatus === 'success' && selectedIndex === null && (
-        <div className="px-4 py-2 text-xs text-green-600 border-t border-gray-100">Saved</div>
+        <div className="px-4 py-2 text-xs text-green-400 border-t border-gray-800">Saved</div>
       )}
     </div>
   ) : null
@@ -437,16 +437,16 @@ export default function AdminShell({
   }
 
   const tableView = (kind === 'collection' && viewMode === 'table') ? (
-    <div className="flex-1 flex flex-col h-full overflow-hidden">
-      <div className="px-5 py-3 border-b border-gray-200 flex items-center justify-between gap-4 shrink-0">
+    <div className="flex-1 flex flex-col h-full overflow-hidden bg-gray-950">
+      <div className="px-5 py-3 border-b border-gray-800 flex items-center justify-between gap-4 shrink-0">
         <div className="flex items-center gap-3">
-          <h2 className="text-sm font-semibold text-gray-800">{currentDatasetName}</h2>
-          <span className="text-xs text-gray-400">{tableRows.length} {tableRows.length === 1 ? 'row' : 'rows'}</span>
+          <h2 className="text-sm font-semibold text-gray-100">{currentDatasetName}</h2>
+          <span className="text-xs text-gray-600">{tableRows.length} {tableRows.length === 1 ? 'row' : 'rows'}</span>
           {viewToggle}
         </div>
         <div className="flex items-center gap-3">
-          {saveStatus === 'success' && <span className="text-xs text-green-600">Saved</span>}
-          {saveStatus === 'error'   && <span className="text-xs text-red-500">Save failed</span>}
+          {saveStatus === 'success' && <span className="text-xs text-green-400">Saved</span>}
+          {saveStatus === 'error'   && <span className="text-xs text-red-400">Save failed</span>}
           {!readOnly && (
             <button
               onClick={() => {
@@ -460,14 +460,14 @@ export default function AdminShell({
             </button>
           )}
           {readOnly && (
-            <span className="text-xs text-amber-600 bg-amber-50 border border-amber-200 px-2 py-1 rounded">Read-only preview</span>
-          )}
+              <span className="text-xs text-amber-300 bg-amber-900/30 border border-amber-700 px-2 py-1 rounded">Read-only preview</span>
+            )}
         </div>
       </div>
       <div className="flex-1 overflow-auto">
         <table className="w-full text-sm border-collapse min-w-max">
           <thead className="sticky top-0 z-10">
-            <tr className="bg-gray-50 border-b border-gray-200">
+            <tr className="bg-gray-900 border-b border-gray-700">
               <th className="text-left px-3 py-2 text-xs font-semibold text-gray-500 w-8">#</th>
               {schema.fields.map(f => (
                 <th key={f.key} className="text-left px-3 py-2 text-xs font-semibold text-gray-500 whitespace-nowrap">
@@ -479,8 +479,8 @@ export default function AdminShell({
           </thead>
           <tbody>
             {tableRows.map((row, rowIdx) => (
-              <tr key={rowIdx} className="border-b border-gray-100 hover:bg-gray-50 group">
-                <td className="px-3 py-1.5 text-xs text-gray-400">{rowIdx + 1}</td>
+              <tr key={rowIdx} className="border-b border-gray-800 hover:bg-gray-800/50 group">
+                <td className="px-3 py-1.5 text-xs text-gray-600">{rowIdx + 1}</td>
                 {schema.fields.map(f => (
                   <td key={f.key} className="px-2 py-1.5">
                     {f.type === 'boolean' ? (
@@ -489,14 +489,14 @@ export default function AdminShell({
                         checked={Boolean(row[f.key])}
                         onChange={e => !readOnly && updateTableCell(rowIdx, f.key, e.target.checked)}
                         disabled={readOnly}
-                        className="w-4 h-4 accent-violet-600"
+                        className="w-4 h-4 accent-violet-500"
                       />
                     ) : f.type === 'enum' ? (
                       <select
                         value={(row[f.key] as string) ?? ''}
                         onChange={e => !readOnly && updateTableCell(rowIdx, f.key, e.target.value)}
                         disabled={readOnly}
-                        className="border border-gray-200 rounded px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-violet-400 bg-white disabled:bg-gray-50 w-full min-w-[80px]"
+                        className="border border-gray-700 rounded px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500 bg-gray-800 text-gray-100 disabled:opacity-60 w-full min-w-[80px]"
                       >
                         <option value="">—</option>
                         {f.enumValues?.map(o => <option key={o} value={o}>{o}</option>)}
@@ -520,7 +520,7 @@ export default function AdminShell({
                         }}
                         readOnly={readOnly}
                         placeholder={f.type === 'list' ? 'a, b, c' : ''}
-                        className="border border-transparent hover:border-gray-200 focus:border-violet-400 rounded px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-violet-400 bg-transparent focus:bg-white w-full min-w-[100px] read-only:cursor-default"
+                        className="border border-transparent hover:border-gray-600 focus:border-violet-500 rounded px-2 py-1 text-xs text-gray-200 focus:outline-none focus:ring-1 focus:ring-violet-500 bg-transparent focus:bg-gray-800 w-full min-w-[100px] read-only:cursor-default"
                       />
                     )}
                   </td>
@@ -532,7 +532,7 @@ export default function AdminShell({
                         const updated = tableRows.filter((_, i) => i !== rowIdx)
                         setTableRows(updated)
                       }}
-                      className="opacity-0 group-hover:opacity-100 text-gray-300 hover:text-red-400 transition-all text-base leading-none"
+                      className="opacity-0 group-hover:opacity-100 text-gray-600 hover:text-red-400 transition-all text-base leading-none"
                       title="Delete row"
                     >×</button>
                   </td>
@@ -544,7 +544,7 @@ export default function AdminShell({
                 <td colSpan={schema.fields.length + 2} className="px-3 py-2">
                   <button
                     onClick={() => setTableRows(prev => [...prev, {}])}
-                    className="text-xs text-violet-600 hover:text-violet-800"
+                    className="text-xs text-violet-400 hover:text-violet-300"
                   >
                     + Add row
                   </button>
@@ -553,7 +553,7 @@ export default function AdminShell({
             )}
             {tableRows.length === 0 && readOnly && (
               <tr>
-                <td colSpan={schema.fields.length + 1} className="px-3 py-8 text-xs text-gray-400 text-center">
+                <td colSpan={schema.fields.length + 1} className="px-3 py-8 text-xs text-gray-600 text-center">
                   No items yet.
                 </td>
               </tr>
@@ -567,7 +567,7 @@ export default function AdminShell({
   // ── Column 3: Form ────────────────────────────────────────────────────────
 
   const emptyState = (
-    <div className="flex-1 flex items-center justify-center text-gray-400">
+    <div className="flex-1 flex items-center justify-center text-gray-600">
       <div className="text-center">
         <div className="text-3xl mb-2">←</div>
         <p className="text-sm">Select an item to edit<br />or click &ldquo;+ New&rdquo;</p>
@@ -588,9 +588,9 @@ export default function AdminShell({
           />
         ))}
 
-        <div className="flex items-center gap-3 pt-2 border-t border-gray-100 mt-2">
+        <div className="flex items-center gap-3 pt-2 border-t border-gray-800 mt-2">
           {readOnly ? (
-            <span className="text-xs text-amber-600 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded">
+            <span className="text-xs text-amber-300 bg-amber-900/30 border border-amber-700 px-3 py-1.5 rounded">
               Read-only preview — sign in to edit
             </span>
           ) : (
@@ -605,7 +605,7 @@ export default function AdminShell({
               {kind === 'collection' && selectedIndex !== -1 && selectedIndex !== null && (
                 <button
                   onClick={() => { setSelectedIndex(null); setFormValue({}) }}
-                  className="text-sm text-gray-500 hover:text-gray-800"
+                  className="text-sm text-gray-500 hover:text-gray-300"
                 >
                   Cancel
                 </button>
@@ -613,13 +613,13 @@ export default function AdminShell({
               {onDelete && (
                 <button
                   onClick={onDelete}
-                  className="ml-auto text-sm text-red-400 hover:text-red-600"
+                  className="ml-auto text-sm text-red-400 hover:text-red-300"
                 >
                   Delete
                 </button>
               )}
-              {saveStatus === 'success' && <span className="text-sm text-green-600">Saved</span>}
-              {saveStatus === 'error' && <span className="text-sm text-red-500">Save failed — try again</span>}
+              {saveStatus === 'success' && <span className="text-sm text-green-400">Saved</span>}
+              {saveStatus === 'error' && <span className="text-sm text-red-400">Save failed — try again</span>}
             </>
           )}
         </div>
@@ -633,18 +633,18 @@ export default function AdminShell({
 
   if (kind === 'singleton') {
     col3 = (
-      <div className="flex-1 flex flex-col h-full overflow-hidden">
-        <div className="px-6 py-3 border-b border-gray-200">
+      <div className="flex-1 flex flex-col h-full overflow-hidden bg-gray-950">
+        <div className="px-6 py-3 border-b border-gray-800">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <h2 className="text-sm font-semibold text-gray-800">{currentDatasetName}</h2>
-              <p className="text-xs text-gray-400">Singleton — one record</p>
+              <h2 className="text-sm font-semibold text-gray-100">{currentDatasetName}</h2>
+              <p className="text-xs text-gray-500">Singleton — one record</p>
             </div>
             <a
               href={apiUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-xs font-mono text-violet-600 hover:text-violet-800 bg-violet-50 px-2 py-1 rounded truncate max-w-xs shrink-0"
+              className="text-xs font-mono text-violet-400 hover:text-violet-300 bg-violet-900/20 px-2 py-1 rounded truncate max-w-xs shrink-0"
               title={apiUrl}
             >
               GET /{projectSlug}/{currentDatasetSlug}
@@ -665,18 +665,18 @@ export default function AdminShell({
     )
   } else if (selectedIndex === null) {
     col3 = (
-      <div className="flex-1 flex flex-col h-full overflow-hidden">
-        <div className="px-6 py-3 border-b border-gray-200">
+      <div className="flex-1 flex flex-col h-full overflow-hidden bg-gray-950">
+        <div className="px-6 py-3 border-b border-gray-800">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <h2 className="text-sm font-semibold text-gray-800">{currentDatasetName}</h2>
-              <p className="text-xs text-gray-400">Collection</p>
+              <h2 className="text-sm font-semibold text-gray-100">{currentDatasetName}</h2>
+              <p className="text-xs text-gray-500">Collection</p>
             </div>
             <a
               href={apiUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-xs font-mono text-violet-600 hover:text-violet-800 bg-violet-50 px-2 py-1 rounded truncate max-w-xs shrink-0"
+              className="text-xs font-mono text-violet-400 hover:text-violet-300 bg-violet-900/20 px-2 py-1 rounded truncate max-w-xs shrink-0"
             >
               GET /{projectSlug}/{currentDatasetSlug}
             </a>
@@ -690,18 +690,18 @@ export default function AdminShell({
     const title = isNew ? `New ${currentDatasetName.replace(/s$/, '')}` : `Edit item ${selectedIndex + 1}`
 
     col3 = (
-      <div className="flex-1 flex flex-col h-full overflow-hidden">
-        <div className="px-6 py-3 border-b border-gray-200">
+      <div className="flex-1 flex flex-col h-full overflow-hidden bg-gray-950">
+        <div className="px-6 py-3 border-b border-gray-800">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <h2 className="text-sm font-semibold text-gray-800">{title}</h2>
-              <p className="text-xs text-gray-400">{currentDatasetName}</p>
+              <h2 className="text-sm font-semibold text-gray-100">{title}</h2>
+              <p className="text-xs text-gray-500">{currentDatasetName}</p>
             </div>
             <a
               href={apiUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-xs font-mono text-violet-600 hover:text-violet-800 bg-violet-50 px-2 py-1 rounded truncate max-w-xs shrink-0"
+              className="text-xs font-mono text-violet-400 hover:text-violet-300 bg-violet-900/20 px-2 py-1 rounded truncate max-w-xs shrink-0"
             >
               GET /{projectSlug}/{currentDatasetSlug}
             </a>
@@ -737,7 +737,7 @@ export default function AdminShell({
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-white">
+    <div className="flex h-screen overflow-hidden bg-gray-950">
       {col1}
       {viewMode === 'table' ? tableView : (
         <>
