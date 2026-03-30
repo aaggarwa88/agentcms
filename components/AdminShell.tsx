@@ -2,7 +2,9 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import Link from 'next/link'
-import ReactMarkdown from 'react-markdown'
+import dynamic from 'next/dynamic'
+
+const MDEditor = dynamic(() => import('@uiw/react-md-editor'), { ssr: false })
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -86,55 +88,22 @@ function AutoTextarea({
 function MarkdownField({
   value,
   onChange,
-  base,
+  isDark,
 }: {
   value: string
   onChange: (v: string) => void
-  base: string
+  isDark: boolean
 }) {
-  const [tab, setTab] = useState<'write' | 'preview'>('write')
   return (
-    <div>
-      <div className="flex items-center gap-1 mb-1.5">
-        <button
-          type="button"
-          onClick={() => setTab('write')}
-          className={`text-xs px-2.5 py-0.5 rounded transition-colors ${
-            tab === 'write'
-              ? 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-100 font-medium'
-              : 'text-gray-400 dark:text-gray-600 hover:text-gray-600 dark:hover:text-gray-400'
-          }`}
-        >
-          Write
-        </button>
-        <button
-          type="button"
-          onClick={() => setTab('preview')}
-          className={`text-xs px-2.5 py-0.5 rounded transition-colors ${
-            tab === 'preview'
-              ? 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-100 font-medium'
-              : 'text-gray-400 dark:text-gray-600 hover:text-gray-600 dark:hover:text-gray-400'
-          }`}
-        >
-          Preview
-        </button>
-        <span className="ml-1 text-xs text-gray-300 dark:text-gray-700">Markdown</span>
-      </div>
-      {tab === 'write' ? (
-        <AutoTextarea
-          className={base}
-          value={value}
-          onChange={onChange}
-          minRows={5}
-        />
-      ) : (
-        <div className={`${base} min-h-[7.5rem] prose prose-sm dark:prose-invert max-w-none`}>
-          {value.trim()
-            ? <ReactMarkdown>{value}</ReactMarkdown>
-            : <span className="text-gray-400 dark:text-gray-600 italic not-prose">Nothing to preview.</span>
-          }
-        </div>
-      )}
+    <div data-color-mode={isDark ? 'dark' : 'light'}>
+      <MDEditor
+        value={value}
+        onChange={v => onChange(v ?? '')}
+        height={240}
+        preview="edit"
+        visibleDragbar={false}
+        style={{ fontSize: 13 }}
+      />
     </div>
   )
 }
@@ -144,11 +113,13 @@ function FieldInput({
   value,
   onChange,
   error,
+  isDark,
 }: {
   field: SchemaField
   value: unknown
   onChange: (v: unknown) => void
   error?: string
+  isDark: boolean
 }) {
   const base = 'border border-gray-300 dark:border-gray-700 rounded px-3 py-2 w-full text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500'
 
@@ -160,7 +131,7 @@ function FieldInput({
           <MarkdownField
             value={(value as string) ?? ''}
             onChange={v => onChange(v)}
-            base={base}
+            isDark={isDark}
           />
         )
       case 'number':
@@ -560,6 +531,7 @@ export default function AdminShell({
             value={value[f.key]}
             onChange={v => onChange({ ...value, [f.key]: v })}
             error={fieldErrors[f.key]}
+            isDark={isDark}
           />
         ))}
 
