@@ -1,5 +1,6 @@
 import { db } from '@/lib/firebase-admin'
 import AdminShell from '@/components/AdminShell'
+import { loadSubmissions } from '@/lib/load-submissions'
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 
@@ -51,7 +52,7 @@ export default async function PreviewDatasetPage({ params }: PageProps) {
   const allDatasets = allDatasetsSnap.docs.map(d => ({
     name: d.data().name as string,
     slug: d.data().slug as string,
-    kind: d.data().kind as 'collection' | 'singleton',
+    kind: d.data().kind as 'collection' | 'singleton' | 'form',
   }))
 
   const datasetSnap = await db
@@ -64,20 +65,27 @@ export default async function PreviewDatasetPage({ params }: PageProps) {
 
   const datasetDoc = datasetSnap.docs[0]
   const datasetData = datasetDoc.data()
-  const kind = datasetData.kind as 'collection' | 'singleton'
+  const kind = datasetData.kind as 'collection' | 'singleton' | 'form'
   const schema = datasetData.schema as {
     fields: { key: string; label: string; type: string; required?: boolean; enumValues?: string[] }[]
   }
 
-  const contentsSnap = await db
-    .collection(`projects/${projectId}/datasets/${datasetDoc.id}/contents`)
-    .orderBy('updatedAt', 'desc')
-    .limit(1)
-    .get()
+  let currentValue: Record<string, unknown> | Record<string, unknown>[] = kind === 'collection' ? [] : {}
+  let submissions = undefined
 
-  const currentValue = contentsSnap.empty
-    ? kind === 'collection' ? [] : {}
-    : contentsSnap.docs[0].data().value
+  if (kind === 'form') {
+    submissions = await loadSubmissions(projectId, datasetDoc.id)
+  } else {
+    const contentsSnap = await db
+      .collection(`projects/${projectId}/datasets/${datasetDoc.id}/contents`)
+      .orderBy('updatedAt', 'desc')
+      .limit(1)
+      .get()
+
+    currentValue = contentsSnap.empty
+      ? kind === 'collection' ? [] : {}
+      : contentsSnap.docs[0].data().value
+  }
 
   return (
     <AdminShell
@@ -89,6 +97,7 @@ export default async function PreviewDatasetPage({ params }: PageProps) {
       schema={schema}
       kind={kind}
       currentValue={currentValue}
+      submissions={submissions}
       readOnly={demoMode === 'readonly'}
       previewMode
     />

@@ -13,7 +13,7 @@ const FieldSchema = z.object({
 const DatasetSchema = z.object({
   name: z.string(),
   slug: z.string(),
-  kind: z.enum(['collection', 'singleton']),
+  kind: z.enum(['collection', 'singleton', 'form']),
   schema: z.object({
     fields: z.array(FieldSchema),
   }),
@@ -25,9 +25,18 @@ const RegisterSchema = z.object({
     name: z.string(),
     slug: z.string(),
   }),
-  adminEmail: z.string().email(),
+  adminEmail: z.preprocess(
+    v => (v === '' || v === null || v === undefined ? undefined : v),
+    z.string().email().optional()
+  ),
   datasets: z.array(DatasetSchema).min(1, 'datasets must be a non-empty array'),
 })
+
+function normalizeAdminEmail(v: unknown): string | null {
+  if (v == null || typeof v !== 'string') return null
+  const t = v.trim()
+  return t === '' ? null : t.toLowerCase()
+}
 
 export async function POST(req: NextRequest) {
   let body: unknown
@@ -57,10 +66,24 @@ export async function POST(req: NextRequest) {
 
   if (!existing.empty) {
     const doc = existing.docs[0]
-    if (doc.data().adminEmail === adminEmail) {
-      // Same owner — update in place
+    const existingEmail = normalizeAdminEmail(doc.data().adminEmail)
+    const incomingEmail = normalizeAdminEmail(adminEmail)
+
+    let sameOwner = existingEmail === incomingEmail
+    if (!sameOwner && existingEmail === null && incomingEmail !== null) {
+      sameOwner = true
+    }
+
+    if (sameOwner) {
       projectId = doc.id
-      await doc.ref.update({ name: project.name, updatedAt: new Date() })
+      const updates: Record<string, unknown> = {
+        name: project.name,
+        updatedAt: new Date(),
+      }
+      if (incomingEmail !== null) {
+        updates.adminEmail = adminEmail!.trim()
+      }
+      await doc.ref.update(updates)
     } else {
       // Different owner — find next available suffix
       let suffix = 2
@@ -84,7 +107,9 @@ export async function POST(req: NextRequest) {
     const newProject = await db.collection('projects').add({
       name: project.name,
       slug: resolvedSlug,
-      adminEmail,
+      ...(adminEmail?.trim()
+        ? { adminEmail: adminEmail.trim() }
+        : { adminEmail: null }),
       createdAt: new Date(),
     })
     projectId = newProject.id
@@ -126,7 +151,10 @@ export async function POST(req: NextRequest) {
     // Only write content when:
     // 1. Dataset is brand new (set initialContent or empty default), OR
     // 2. Dataset exists but caller explicitly provided initialContent
-    const shouldWriteContent = isNewDataset || dataset.initialContent !== undefined
+    // Form datasets never write to contents — submissions are stored separately
+    const shouldWriteContent =
+      dataset.kind !== 'form' &&
+      (isNewDataset || dataset.initialContent !== undefined)
 
     if (shouldWriteContent) {
       const defaultContent = dataset.kind === 'collection' ? [] : {}

@@ -13,12 +13,14 @@ Body:
   "datasets": [{
     "name": string,
     "slug": string,
-    "kind": "collection" | "singleton",
+    "kind": "collection" | "singleton" | "form",
     "schema": { "fields": [{ "key": string, "label": string, "type": string, "required"?: boolean, "enumValues"?: string[] }] },
     "initialContent": [] or {}
   }],
-  "adminEmail": string
+  "adminEmail": string (optional)
 }
+
+If omitted, registration still succeeds; the first person who opens the admin URL and requests a magic link sets `adminEmail` on the project.
 
 Response:
 {
@@ -32,6 +34,46 @@ Response:
 GET https://agentcms.app/api/p/:projectSlug/:datasetSlug
 Public. No auth. CORS open. Returns [] for collections, {} for singletons.
 Cached at the CDN for ~30s. Always append ?_=Date.now() to bust the cache and guarantee fresh content.
+Form datasets are NOT readable via GET — use the Submit API below.
+
+## Form datasets
+Use `kind: "form"` for visitor submissions (email signups, contact forms, etc.).
+Same schema as collection datasets, but no `initialContent` and no public GET.
+Admin reads submissions in an inbox view.
+
+Example:
+{
+  "name": "Email Signups",
+  "slug": "signups",
+  "kind": "form",
+  "schema": {
+    "fields": [
+      { "key": "email", "type": "email", "label": "Email", "required": true },
+      { "key": "name",  "type": "text",  "label": "Name" }
+    ]
+  }
+}
+
+## Submit API (form datasets only)
+POST https://www.agentcms.app/api/p/:projectSlug/:datasetSlug/submit
+Content-Type: application/json
+CORS: Access-Control-Allow-Origin: *
+Body: JSON object with keys matching schema.fields[].key
+Response: { "ok": true }
+Rate limit: 5 submissions per IP per minute
+
+Frontend snippet:
+async function submitForm(data) {
+  const res = await fetch(
+    `https://www.agentcms.app/api/p/{slug}/{dataset}/submit`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    }
+  )
+  return res.json()
+}
 
 ## Field types
 text, textarea (alias: longtext), number, boolean, date, url, email, enum (requires enumValues), list

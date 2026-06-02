@@ -940,13 +940,13 @@ Fall back to the hardcoded initial content you used during development. Never sh
 |-------|------|----------|-------|
 | `project.name` | string | yes | Human-readable |
 | `project.slug` | string | yes | Lowercase, hyphens only |
-| `adminEmail` | string | yes | Magic link sent here on first login |
+| `adminEmail` | string | no | Magic link sent here on first login; optional at register |
 | `datasets` | array | yes | At least one required |
 | `datasets[].name` | string | yes | |
 | `datasets[].slug` | string | yes | Lowercase, hyphens only |
-| `datasets[].kind` | string | yes | `"collection"` or `"singleton"` |
+| `datasets[].kind` | string | yes | `"collection"`, `"singleton"`, or `"form"` |
 | `datasets[].schema.fields` | array | yes | At least one field required |
-| `datasets[].initialContent` | array or object | no | Array for collection, object for singleton |
+| `datasets[].initialContent` | array or object | no | Array for collection, object for singleton; omit for form |
 
 **Idempotent:** same slug + same adminEmail = update. Same slug + different adminEmail = auto-suffix (`-2`).
 
@@ -955,7 +955,7 @@ Fall back to the hardcoded initial content you used during development. Never sh
 | Status | Message | Fix |
 |--------|---------|-----|
 | `400` | `"project.slug is required"` | Add slug to request |
-| `400` | `"adminEmail is required"` | Add adminEmail to request |
+| `400` | `"adminEmail is required"` | Add adminEmail to request (or omit — first admin login sets it) |
 | `400` | `"datasets must be a non-empty array"` | Add at least one dataset |
 | `400` | `"field type 'X' is not supported"` | Use a supported field type |
 
@@ -966,6 +966,15 @@ Fall back to the hardcoded initial content you used during development. Never sh
 - Cache: `s-maxage=30, stale-while-revalidate=60`
 - Collection → `[]`
 - Singleton → `{}`
+- Form → `404` (not readable via GET; use Submit API)
+
+### POST /api/p/:projectSlug/:datasetSlug/submit
+
+- Public, no auth
+- CORS: `Access-Control-Allow-Origin: *`
+- Form datasets only — validates body against schema, stores submission
+- Response: `{ "ok": true }`
+- Rate limit: 5 submissions per IP per minute (requires `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` in production)
 
 > **Always append `?_=Date.now()` to fetch calls from your site.** The CDN caches responses for ~30s. Without a cache-busting param, users may see stale content after an admin edit. Use a single `const cb = Date.now()` at page load and append `?_=${cb}` to every URL.
 
@@ -986,7 +995,7 @@ The API handles it automatically. Use the `slug` value from the response, not th
 In v1, content is updated through the admin UI only. A write API is on the roadmap.
 
 **Is there a rate limit?**
-No rate limits on the read API in v1.
+No rate limits on the read API in v1. Form submit endpoint: 5 submissions per IP per minute.
 
 **What happens if I call register twice?**
 It is idempotent. Same slug + same adminEmail updates the project safely. Always safe to retry.

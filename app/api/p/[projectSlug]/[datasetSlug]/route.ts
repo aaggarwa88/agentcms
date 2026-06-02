@@ -47,7 +47,14 @@ export async function GET(
 
   const datasetDoc = datasetSnap.docs[0]
   const datasetId = datasetDoc.id
-  const kind = datasetDoc.data().kind as 'collection' | 'singleton'
+  const kind = datasetDoc.data().kind as 'collection' | 'singleton' | 'form'
+
+  if (kind === 'form') {
+    return NextResponse.json(
+      { error: 'Form datasets are not readable via GET' },
+      { status: 404, headers: CORS_HEADERS }
+    )
+  }
 
   const contentsSnap = await db
     .collection(`projects/${projectId}/datasets/${datasetId}/contents`)

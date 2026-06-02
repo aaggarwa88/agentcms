@@ -1,5 +1,6 @@
 import { db } from '@/lib/firebase-admin'
 import AdminShell from '@/components/AdminShell'
+import { loadSubmissions } from '@/lib/load-submissions'
 import type { Metadata } from 'next'
 
 interface PageProps {
@@ -30,7 +31,6 @@ export default async function DatasetPage({ params }: PageProps) {
   const rawDemo = projectData.publicDemo
   const publicDemo = rawDemo === true ? 'readonly' : (rawDemo === false || !rawDemo ? 'off' : rawDemo) as 'off' | 'readonly' | 'editable'
 
-  // Fetch ALL datasets for column 1 nav
   const allDatasetsSnap = await db
     .collection(`projects/${projectId}/datasets`)
     .orderBy('createdAt', 'asc')
@@ -39,10 +39,9 @@ export default async function DatasetPage({ params }: PageProps) {
   const allDatasets = allDatasetsSnap.docs.map(d => ({
     name: d.data().name as string,
     slug: d.data().slug as string,
-    kind: d.data().kind as 'collection' | 'singleton',
+    kind: d.data().kind as 'collection' | 'singleton' | 'form',
   }))
 
-  // Current dataset
   const datasetSnap = await db
     .collection(`projects/${projectId}/datasets`)
     .where('slug', '==', params.dataset)
@@ -56,7 +55,7 @@ export default async function DatasetPage({ params }: PageProps) {
   const datasetDoc = datasetSnap.docs[0]
   const datasetId = datasetDoc.id
   const datasetData = datasetDoc.data()
-  const kind = datasetData.kind as 'collection' | 'singleton'
+  const kind = datasetData.kind as 'collection' | 'singleton' | 'form'
   const schema = datasetData.schema as {
     fields: {
       key: string
@@ -67,15 +66,22 @@ export default async function DatasetPage({ params }: PageProps) {
     }[]
   }
 
-  const contentsSnap = await db
-    .collection(`projects/${projectId}/datasets/${datasetId}/contents`)
-    .orderBy('updatedAt', 'desc')
-    .limit(1)
-    .get()
+  let currentValue: Record<string, unknown> | Record<string, unknown>[] = kind === 'collection' ? [] : {}
+  let submissions = undefined
 
-  const currentValue = contentsSnap.empty
-    ? kind === 'collection' ? [] : {}
-    : contentsSnap.docs[0].data().value
+  if (kind === 'form') {
+    submissions = await loadSubmissions(projectId, datasetId)
+  } else {
+    const contentsSnap = await db
+      .collection(`projects/${projectId}/datasets/${datasetId}/contents`)
+      .orderBy('updatedAt', 'desc')
+      .limit(1)
+      .get()
+
+    currentValue = contentsSnap.empty
+      ? kind === 'collection' ? [] : {}
+      : contentsSnap.docs[0].data().value
+  }
 
   return (
     <AdminShell
@@ -87,6 +93,7 @@ export default async function DatasetPage({ params }: PageProps) {
       schema={schema}
       kind={kind}
       currentValue={currentValue}
+      submissions={submissions}
       publicDemo={publicDemo}
     />
   )

@@ -22,7 +22,7 @@ function LoginForm() {
       const res = await fetch('/api/auth/request', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, projectSlug: slug, redirect }),
+        body: JSON.stringify({ email: email.trim(), projectSlug: slug, redirect }),
       })
       const data = await res.json()
       if (!res.ok) {
@@ -71,10 +71,11 @@ function LoginForm() {
                 <span className="text-white/80 text-sm font-medium">AgentCMS</span>
               </div>
               <h1 className="text-white text-xl font-bold leading-snug">
-                What&apos;s the admin email<br />for this site?
+                Sign in to this site&apos;s admin
               </h1>
               <p className="text-violet-200 text-sm mt-1.5">
-                Enter the email used when this site was set up. We&apos;ll send you a one-click sign-in link.
+                We&apos;ll email you a one-click sign-in link. If no admin email was set when the site was registered,
+                the address you enter here becomes the admin for this project.
               </p>
             </div>
 
@@ -82,7 +83,7 @@ function LoginForm() {
             <div className="p-6">
               <form onSubmit={handleSubmit}>
                 <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
-                  Admin email address
+                  Your email address
                 </label>
                 <input
                   type="email"

@@ -3,6 +3,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import Link from 'next/link'
 import dynamic from 'next/dynamic'
+import FormInbox from '@/components/FormInbox'
+import type { Submission } from '@/lib/dataset-types'
 
 const MDEditor = dynamic(() => import('@uiw/react-md-editor'), { ssr: false })
 
@@ -23,7 +25,7 @@ interface Schema {
 interface DatasetMeta {
   name: string
   slug: string
-  kind: 'collection' | 'singleton'
+  kind: 'collection' | 'singleton' | 'form'
 }
 
 type DemoMode = 'off' | 'readonly' | 'editable'
@@ -35,8 +37,9 @@ interface Props {
   currentDatasetSlug: string
   currentDatasetName: string
   schema: Schema
-  kind: 'collection' | 'singleton'
+  kind: 'collection' | 'singleton' | 'form'
   currentValue: Record<string, unknown> | Record<string, unknown>[]
+  submissions?: Submission[]
   readOnly?: boolean
   previewMode?: boolean
   publicDemo?: DemoMode
@@ -211,6 +214,7 @@ export default function AdminShell({
   schema,
   kind,
   currentValue,
+  submissions = [],
   readOnly = false,
   previewMode = false,
   publicDemo: initialPublicDemo = 'off',
@@ -362,7 +366,7 @@ export default function AdminShell({
                 ? 'bg-violet-100 dark:bg-violet-800/40 text-violet-600 dark:text-violet-400'
                 : 'bg-gray-200 dark:bg-gray-800 text-gray-500 dark:text-gray-600'
             }`}>
-              {ds.kind === 'singleton' ? '1' : '…'}
+              {ds.kind === 'singleton' ? '1' : ds.kind === 'form' ? 'form' : '…'}
             </span>
           </Link>
         ))}
@@ -653,6 +657,20 @@ export default function AdminShell({
             handleSave(updated)
           } : undefined
         )}
+      </div>
+    )
+  }
+
+  if (kind === 'form') {
+    return (
+      <div className="flex h-screen overflow-hidden bg-white dark:bg-gray-950">
+        {col1}
+        <FormInbox
+          datasetName={currentDatasetName}
+          datasetSlug={currentDatasetSlug}
+          schema={schema}
+          submissions={submissions}
+        />
       </div>
     )
   }

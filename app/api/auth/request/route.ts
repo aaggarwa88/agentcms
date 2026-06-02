@@ -5,12 +5,24 @@ import crypto from 'crypto'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
+function normalizeAdminEmail(v: unknown): string | null {
+  if (v == null || typeof v !== 'string') return null
+  const t = v.trim()
+  return t === '' ? null : t.toLowerCase()
+}
+
 export async function POST(req: NextRequest) {
   try {
     const { email, projectSlug, redirect } = await req.json()
 
     if (!email || !projectSlug) {
       return NextResponse.json({ error: 'email and projectSlug are required' }, { status: 400 })
+    }
+
+    const trimmed = String(email).trim()
+    const basicEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!basicEmail.test(trimmed)) {
+      return NextResponse.json({ error: 'Invalid email' }, { status: 400 })
     }
 
     const projectSnap = await db
@@ -23,9 +35,27 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Project not found' }, { status: 404 })
     }
 
-    const adminEmail = projectSnap.docs[0].data().adminEmail as string
+    const projectRef = projectSnap.docs[0].ref
 
-    if (email.toLowerCase() !== adminEmail.toLowerCase()) {
+    let sendMagicLink = false
+    await db.runTransaction(async t => {
+      const snap = await t.get(projectRef)
+      if (!snap.exists) return
+      const stored = normalizeAdminEmail(snap.data()?.adminEmail)
+      const incoming = trimmed.toLowerCase()
+
+      if (!stored) {
+        t.update(projectRef, { adminEmail: trimmed, updatedAt: new Date() })
+        sendMagicLink = true
+        return
+      }
+
+      if (incoming === stored) {
+        sendMagicLink = true
+      }
+    })
+
+    if (!sendMagicLink) {
       return NextResponse.json({ ok: true })
     }
 
@@ -34,7 +64,7 @@ export async function POST(req: NextRequest) {
     try {
       const recentSnap = await db
         .collection('auth_tokens')
-        .where('email', '==', email)
+        .where('email', '==', trimmed)
         .orderBy('createdAt', 'desc')
         .limit(10)
         .get()
@@ -55,7 +85,7 @@ export async function POST(req: NextRequest) {
 
     await db.collection('auth_tokens').add({
       tokenHash,
-      email,
+      email: trimmed,
       projectSlug,
       expiresAt,
       used: false,
@@ -67,7 +97,7 @@ export async function POST(req: NextRequest) {
 
     await resend.emails.send({
       from: 'AgentCMS <noreply@agentcms.app>',
-      to: email,
+      to: trimmed,
       subject: `Sign in to ${projectSlug} · AgentCMS`,
       html: `
         <div style="font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;padding:32px 24px;">
