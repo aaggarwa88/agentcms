@@ -666,10 +666,12 @@ export default function AdminShell({
       <div className="flex h-screen overflow-hidden bg-white dark:bg-gray-950">
         {col1}
         <FormInbox
+          projectSlug={projectSlug}
           datasetName={currentDatasetName}
           datasetSlug={currentDatasetSlug}
           schema={schema}
           submissions={submissions}
+          readOnly={readOnly || previewMode}
         />
       </div>
     )
