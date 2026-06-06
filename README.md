@@ -1,3 +1,7 @@
+> **AgentCMS** gives AI-built websites a built-in admin panel. Tell your AI to use AgentCMS and your site comes with an editable admin URL — no CMS setup required.
+
+---
+
 # AgentCMS — AI Agent Implementation Guide
 
 AgentCMS adds an editable admin panel to any AI-built website.
